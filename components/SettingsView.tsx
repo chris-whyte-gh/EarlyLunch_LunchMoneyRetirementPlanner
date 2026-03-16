@@ -1,10 +1,11 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
-import { cn } from '@/lib/utils';
-import { Save, Trash2, CheckCircle, AlertCircle, Key, Search, RefreshCw, ArrowRight, Info } from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { Save, Trash2, CheckCircle, AlertCircle, Key, Search, RefreshCw, Info } from 'lucide-react';
 import { Asset } from '@/lib/lunchmoney';
 import { categorizeAsset } from '@/lib/modeling';
+import { STORAGE_KEYS } from '@/lib/constants';
 
 export function SettingsView() {
     const [token, setToken] = useState('');
@@ -40,20 +41,20 @@ export function SettingsView() {
     };
 
     useEffect(() => {
-        const storedToken = localStorage.getItem('lunch_money_token');
+        const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (storedToken) {
             setToken(storedToken);
             // Auto-fetch data if token exists
             fetchDebugData(storedToken);
         }
 
-        const storedBirthYear = localStorage.getItem('retirement_birth_year');
+        const storedBirthYear = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
         if (storedBirthYear) setBirthYear(storedBirthYear);
 
-        const storedBirthMonth = localStorage.getItem('retirement_birth_month');
+        const storedBirthMonth = localStorage.getItem(STORAGE_KEYS.BIRTH_MONTH);
         if (storedBirthMonth) setBirthMonth(storedBirthMonth);
 
-        const storedExcluded = localStorage.getItem('excluded_asset_ids');
+        const storedExcluded = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
         if (storedExcluded) {
             try {
                 setExcludedIds(JSON.parse(storedExcluded));
@@ -62,7 +63,7 @@ export function SettingsView() {
             }
         }
 
-        const storedSpending = localStorage.getItem('spending_source_ids');
+        const storedSpending = localStorage.getItem(STORAGE_KEYS.SPENDING_SOURCES);
         if (storedSpending) {
             try {
                 setSpendingSourceIds(JSON.parse(storedSpending));
@@ -75,18 +76,18 @@ export function SettingsView() {
 
     const handleSave = () => {
         if (token.trim()) {
-            localStorage.setItem('lunch_money_token', token.trim());
+            localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token.trim());
         }
         if (birthYear.trim()) {
-            localStorage.setItem('retirement_birth_year', birthYear.trim());
+            localStorage.setItem(STORAGE_KEYS.BIRTH_YEAR, birthYear.trim());
         }
         if (birthMonth.trim()) {
-            localStorage.setItem('retirement_birth_month', birthMonth.trim());
+            localStorage.setItem(STORAGE_KEYS.BIRTH_MONTH, birthMonth.trim());
         }
 
         // Save IDs
-        localStorage.setItem('excluded_asset_ids', JSON.stringify(excludedIds));
-        localStorage.setItem('spending_source_ids', JSON.stringify(spendingSourceIds));
+        localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(excludedIds));
+        localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(spendingSourceIds));
 
         setStatus('saved');
         setTimeout(() => setStatus('idle'), 3000);
@@ -118,9 +119,9 @@ export function SettingsView() {
     };
 
     const handleRemove = () => {
-        localStorage.removeItem('lunch_money_token');
-        localStorage.removeItem('retirement_birth_year');
-        localStorage.removeItem('retirement_birth_month');
+        localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+        localStorage.removeItem(STORAGE_KEYS.BIRTH_YEAR);
+        localStorage.removeItem(STORAGE_KEYS.BIRTH_MONTH);
         setToken('');
         setBirthYear('');
         setBirthMonth('');
@@ -131,16 +132,13 @@ export function SettingsView() {
 
 
 
-    const formatCurrency = (val: string) => {
-        const num = parseFloat(val);
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
-    };
+
 
     // Auto-save IDs whenever they change (only after initial load)
     useEffect(() => {
         if (isLoaded && status === 'idle') {
-            localStorage.setItem('excluded_asset_ids', JSON.stringify(excludedIds));
-            localStorage.setItem('spending_source_ids', JSON.stringify(spendingSourceIds));
+            localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(excludedIds));
+            localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(spendingSourceIds));
         }
     }, [excludedIds, spendingSourceIds, status, isLoaded]);
 
@@ -181,7 +179,7 @@ export function SettingsView() {
                             className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
                         />
                         <p className="text-xs text-muted-foreground">
-                            Your token is stored securely in your browser's local storage. We do not store it on any server.
+                            Your token is stored securely in your browser&apos;s local storage. We do not store it on any server.
                         </p>
                     </div>
 
@@ -261,10 +259,10 @@ export function SettingsView() {
                     <div className="text-xs leading-relaxed text-blue-900">
                         <p className="font-bold mb-1 text-[13px]">How this works:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><span className="font-bold">Income (Portfolio):</span> Check your retirement assets (401k, Roth, Brokerage). This counts toward your "Win" number.</li>
+                            <li><span className="font-bold">Income (Portfolio):</span> Check your retirement assets (401k, Roth, Brokerage). This counts toward your &quot;Win&quot; number.</li>
                             <li><span className="font-bold">Spend (Spending):</span> Check your credit cards and checking accounts. This helps us estimate your <em>actual monthly burn</em>.</li>
                         </ul>
-                        <p className="mt-2 text-[10px] italic">Tip: You can exclude a loan (like a Mortgage) from "Income" to keep it out of your net worth, but "Spend" will still track its payments!</p>
+                        <p className="mt-2 text-[10px] italic">Tip: You can exclude a loan (like a Mortgage) from &quot;Income&quot; to keep it out of your net worth, but &quot;Spend&quot; will still track its payments!</p>
                     </div>
                 </div>
 
@@ -354,7 +352,7 @@ export function SettingsView() {
 
                 {!debugLoading && assets.length === 0 && !debugError && (
                     <p className="text-sm text-muted-foreground py-4 text-center">
-                        Click "Test Connection" to view your raw Lunch Money data.
+                        Click &quot;Test Connection&quot; to view your raw Lunch Money data.
                     </p>
                 )}
             </div>
@@ -364,7 +362,7 @@ export function SettingsView() {
                 <ol className="list-decimal list-inside space-y-1 ml-1">
                     <li>Log in to your <strong>Lunch Money</strong> account.</li>
                     <li>Go to <strong>Settings</strong> → <strong>Developers</strong>.</li>
-                    <li>Select "Request New Access Token".</li>
+                    <li>Select &quot;Request New Access Token&quot;.</li>
                     <li>Copy the new token and paste it above.</li>
                 </ol>
             </div>

@@ -1,7 +1,7 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef, useMemo } from 'react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ReferenceArea, Label } from 'recharts';
-import { ProjectionPoint, ScenarioPhase } from '@/lib/modeling';
-import { cn } from '@/lib/utils';
+import { ProjectionPoint, ScenarioPhase, calculateRealValue } from '@/lib/modeling';
+import { formatCurrency } from '@/lib/utils';
 
 interface ProjectionChartProps {
     data: ProjectionPoint[];
@@ -14,42 +14,28 @@ interface ProjectionChartProps {
     onPhaseCreate?: (start: number, end: number) => void;
 }
 
-export function ProjectionChart({ data, retirementAge, phases = [], viewMode, inflationRate, currentAge, onRetirementAgeChange, onPhaseCreate }: ProjectionChartProps) {
+export function ProjectionChart({ data, retirementAge, phases = [], viewMode, inflationRate, currentAge, onPhaseCreate }: ProjectionChartProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [dragStart, setDragStart] = useState<number | null>(null);
     const [dragEnd, setDragEnd] = useState<number | null>(null);
-    const [hoverData, setHoverData] = useState<{ age: number; payload: any[] } | null>(null);
-    const chartRef = useRef<HTMLDivElement>(null);
+    const [hoverData, setHoverData] = useState<{ age: number; payload: any[]; isRetirement?: boolean } | null>(null);
 
-    // Helper to get value based on view mode
-    const getValue = useCallback((amount: number, age: number) => {
-        if (viewMode === 'nominal') return amount;
-        const yearsInFuture = Math.max(0, age - currentAge);
-        return amount / Math.pow(1 + inflationRate, yearsInFuture);
-    }, [viewMode, inflationRate, currentAge]);
+    // Calculate retirement point data for default display
+    const retirementData = useMemo(() => {
+        const point = data.find(d => d.age === retirementAge);
+        if (!point) return null;
+        return {
+            age: retirementAge,
+            isRetirement: true,
+            payload: [
+                { name: 'Roth', value: calculateRealValue(point.rothBalance, retirementAge, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-1))' },
+                { name: 'Pre-Tax', value: calculateRealValue(point.preTaxBalance, retirementAge, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-2))' },
+                { name: 'Taxable', value: calculateRealValue(point.taxableBalance, retirementAge, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-3))' }
+            ]
+        };
+    }, [data, retirementAge, currentAge, inflationRate, viewMode]);
 
-    const formatCurrency = (value: number | null | undefined, maxDecimals = 0) => {
-        if (value === null || value === undefined) return '---';
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: maxDecimals,
-            notation: 'compact'
-        }).format(value);
-    };
-
-    // Default placeholder data when not hovering
-    const defaultData = {
-        age: '---',
-        label: "Retirement Age",
-        payload: [
-            { name: 'Roth', value: null, stroke: 'hsl(var(--chart-1))' },
-            { name: 'Pre-Tax', value: null, stroke: 'hsl(var(--chart-2))' },
-            { name: 'Taxable', value: null, stroke: 'hsl(var(--chart-3))' }
-        ]
-    };
-
-    const displayData = hoverData || defaultData;
+    const displayData = hoverData || retirementData;
 
     const handleChartMouseDown = (e: any) => {
         if (e && e.activeLabel) {
@@ -69,9 +55,9 @@ export function ProjectionChart({ data, retirementAge, phases = [], viewMode, in
                 setHoverData({
                     age,
                     payload: [
-                        { name: 'Roth', value: getValue(dataPoint.rothBalance, age), stroke: 'hsl(var(--chart-1))' },
-                        { name: 'Pre-Tax', value: getValue(dataPoint.preTaxBalance, age), stroke: 'hsl(var(--chart-2))' },
-                        { name: 'Taxable', value: getValue(dataPoint.taxableBalance, age), stroke: 'hsl(var(--chart-3))' }
+                        { name: 'Roth', value: calculateRealValue(dataPoint.rothBalance, age, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-1))' },
+                        { name: 'Pre-Tax', value: calculateRealValue(dataPoint.preTaxBalance, age, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-2))' },
+                        { name: 'Taxable', value: calculateRealValue(dataPoint.taxableBalance, age, currentAge, inflationRate, viewMode), stroke: 'hsl(var(--chart-3))' }
                     ]
                 });
             }
@@ -109,54 +95,61 @@ export function ProjectionChart({ data, retirementAge, phases = [], viewMode, in
     // Prepare chart data with view mode adjustments
     const chartData = data.map(d => ({
         ...d,
-        rothBalance: getValue(d.rothBalance, d.age),
-        preTaxBalance: getValue(d.preTaxBalance, d.age),
-        taxableBalance: getValue(d.taxableBalance, d.age),
+        rothBalance: calculateRealValue(d.rothBalance, d.age, currentAge, inflationRate, viewMode),
+        preTaxBalance: calculateRealValue(d.preTaxBalance, d.age, currentAge, inflationRate, viewMode),
+        taxableBalance: calculateRealValue(d.taxableBalance, d.age, currentAge, inflationRate, viewMode),
     }));
 
     return (
         <div className="w-full p-6 bg-white rounded-xl border border-border shadow-sm select-none">
             {/* Info Bar - Always Visible */}
-            <div className="mb-6 bg-white border border-border p-0 rounded-xl shadow-sm overflow-hidden flex flex-col md:flex-row">
+            <div className="mb-6 bg-white border border-border p-0 rounded-xl shadow-sm overflow-hidden">
                 {displayData ? (
-                    <>
-                        {/* Main Stats Section */}
-                        <div className="flex-1 p-5 flex items-center gap-8 bg-gradient-to-r from-primary/5 via-primary/5 to-transparent">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                                    {hoverData ? "Age" : "Retirement Age"}
-                                </span>
-                                <span className="text-3xl font-bold text-foreground leading-none">{displayData.age}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-12 overflow-hidden">
+                        {/* Age Section */}
+                        <div className="md:col-span-2 p-5 flex items-center justify-center bg-gradient-to-r from-primary/5 to-transparent border-b md:border-b-0 md:border-r border-border/50">
+                            <div className="flex flex-col items-center">
+                                <div className="h-4 flex items-end">
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap">
+                                        {hoverData ? "Age" : "Retirement Target"}
+                                    </span>
+                                </div>
+                                <span className="text-2xl md:text-3xl font-bold text-foreground leading-none tabular-nums">{displayData.age}</span>
                             </div>
+                        </div>
 
-                            <div className="h-10 w-px bg-primary/10"></div>
-
-                            <div className="flex flex-col">
-                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1">
-                                    Total Portfolio <span className="opacity-60 font-medium normal-case">({viewMode === 'real' ? "Real $" : "Nominal"})</span>
-                                </span>
-                                <span className="text-3xl font-bold text-primary leading-none">
-                                    {formatCurrency(displayData.payload.reduce((sum: number, entry: any) => sum + (Number(entry.value) || 0), 0), 2)}
+                        {/* Total Portfolio Section */}
+                        <div className="md:col-span-4 p-5 flex items-center justify-center bg-gradient-to-r from-transparent via-primary/5 to-transparent border-b md:border-b-0 md:border-r border-border/50 min-w-0">
+                            <div className="flex flex-col items-center min-w-0">
+                                <div className="h-4 flex items-end">
+                                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider whitespace-nowrap truncate">
+                                        Total Portfolio <span className="opacity-60 font-medium normal-case">({viewMode === 'real' ? "Real $" : "Nominal"})</span>
+                                    </span>
+                                </div>
+                                <span className="text-2xl md:text-3xl font-bold text-primary leading-none tabular-nums truncate">
+                                    {formatCurrency(displayData.payload.reduce((sum: number, entry: any) => sum + (Number(entry.value) || 0), 0), { notation: 'compact', maxDecimals: 2 })}
                                 </span>
                             </div>
                         </div>
 
                         {/* Breakdown Section */}
-                        <div className="px-6 py-4 flex items-center gap-6 bg-muted/30 border-t md:border-t-0 md:border-l border-border">
+                        <div className="md:col-span-6 px-4 py-4 grid grid-cols-3 items-center bg-muted/30 gap-2 overflow-hidden">
                             {[...displayData.payload].reverse().map((entry: any) => (
-                                <div key={entry.name} className="flex flex-col items-start gap-0.5 min-w-[80px]">
-                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                <div key={entry.name} className="flex flex-col items-center min-w-0">
+                                    <div className="flex items-center gap-1.5 mb-0.5 max-w-full">
                                         <div
-                                            className="w-2 h-2 rounded-full"
+                                            className="w-1.5 h-1.5 rounded-full shrink-0"
                                             style={{ backgroundColor: entry.stroke }}
                                         />
-                                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{entry.name}</span>
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter truncate">{entry.name}</span>
                                     </div>
-                                    <span className="text-lg font-bold text-foreground/90 tabular-nums">{formatCurrency(entry.value, 2)}</span>
+                                    <span className="text-xs md:text-sm lg:text-base font-bold text-foreground/90 tabular-nums truncate">
+                                        {formatCurrency(entry.value, { maxDecimals: 2 })}
+                                    </span>
                                 </div>
                             ))}
                         </div>
-                    </>
+                    </div>
                 ) : (
                     <div className="w-full p-6 flex items-center justify-center text-muted-foreground text-sm font-medium">
                         Enter financial details to see projection
@@ -262,7 +255,7 @@ export function ProjectionChart({ data, retirementAge, phases = [], viewMode, in
                         />
                         <YAxis
                             stroke="hsl(var(--muted-foreground))"
-                            tickFormatter={(val) => formatCurrency(val)}
+                            tickFormatter={(val) => formatCurrency(val, { notation: 'compact' })}
                             tick={{ fontSize: 12, fontWeight: 600 }}
                             tickLine={false}
                             axisLine={false}

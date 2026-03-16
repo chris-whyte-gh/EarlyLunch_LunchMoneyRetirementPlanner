@@ -34,41 +34,36 @@ export async function GET(request: Request) {
 
         const fmt = (d: Date) => d.toISOString().split('T')[0];
 
-        try {
-            const [manualAssets, plaidAccounts, transactions] = await Promise.all([
-                client.getAssets(),
-                client.getPlaidAccounts(),
-                client.getTransactions(fmt(startDate), fmt(endDate))
-            ]);
+        const [manualAssets, plaidAccounts, transactions, budgets] = await Promise.all([
+            client.getAssets(),
+            client.getPlaidAccounts(),
+            client.getTransactions(fmt(startDate), fmt(endDate)),
+            client.getBudgets(fmt(startDate), fmt(endDate))
+        ]);
 
-            const mappedPlaidAssets = plaidAccounts.map(acc => ({
-                id: acc.id,
-                type_name: acc.type,
-                subtype_name: acc.subtype,
-                name: acc.display_name || acc.name,
-                balance: acc.balance,
-                balance_as_of: acc.last_import || new Date().toISOString(),
-                currency: acc.currency,
-                institution_name: acc.institution_name,
-                created_at: new Date().toISOString(),
-                is_plaid: true
-            }));
+        const mappedPlaidAssets = plaidAccounts.map(acc => ({
+            id: acc.id,
+            type_name: acc.type,
+            subtype_name: acc.subtype,
+            name: acc.display_name || acc.name,
+            balance: acc.balance,
+            balance_as_of: acc.last_import || new Date().toISOString(),
+            currency: acc.currency,
+            institution_name: acc.institution_name,
+            created_at: new Date().toISOString(),
+            is_plaid: true
+        }));
 
-            const assets = [...manualAssets, ...mappedPlaidAssets];
-            return NextResponse.json({ assets, transactions });
-
-        } catch (apiError: any) {
-            console.error("Lunch Money API Error Detail:", apiError.message);
-            const isUnauthorized = apiError.message.includes('401') || apiError.message.includes('Unauthorized');
-
-            return NextResponse.json({
-                error: apiError.message,
-                code: isUnauthorized ? 'INVALID_TOKEN' : 'API_ERROR'
-            }, { status: isUnauthorized ? 401 : 500 });
-        }
+        const assets = [...manualAssets, ...mappedPlaidAssets];
+        return NextResponse.json({ assets, transactions, budgets });
 
     } catch (error: any) {
-        console.error("Internal Server Error", error);
-        return NextResponse.json({ error: error.message }, { status: 500 });
+        console.error("Lunch Money API Error Detail:", error.message);
+        const isUnauthorized = error.message.includes('401') || error.message.includes('Unauthorized');
+
+        return NextResponse.json({
+            error: error.message,
+            code: isUnauthorized ? 'INVALID_TOKEN' : 'API_ERROR'
+        }, { status: isUnauthorized ? 401 : 500 });
     }
 }

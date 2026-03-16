@@ -9,13 +9,11 @@ interface TopNavProps {
 }
 
 export function TopNav({ activeTab, onTabChange }: TopNavProps) {
-    // Secondary Tabs (Sub-nav for Home)
     const secondaryTabs = [
         { name: "HOW TO USE", value: "guide" },
         { name: "OVERVIEW", value: "overview" },
-        { name: "ROTH STRATEGY", value: "roth" },
-        { name: "SEPP DISTRIBUTION", value: "sepp" },
-        { name: "TAX ANALYSIS", value: "tax" },
+        { name: "BUILD ROTH LADDER", value: "roth" },
+        { name: "PLAN SEPP (72t)", value: "sepp" },
         { name: "SETTINGS", value: "settings" },
     ];
 

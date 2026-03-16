@@ -1,7 +1,14 @@
 import { Asset, Transaction } from './lunchmoney';
 
 export function adjustForInflation(amount: number, years: number, inflationRate: number): number {
+    if (years <= 0) return amount;
     return amount / Math.pow(1 + inflationRate, years);
+}
+
+export function calculateRealValue(amount: number, age: number, currentAge: number, inflationRate: number, viewMode: 'nominal' | 'real'): number {
+    if (viewMode === 'nominal') return amount;
+    const yearsInFuture = Math.max(0, age - currentAge);
+    return adjustForInflation(amount, yearsInFuture, inflationRate);
 }
 
 export type TaxBucket = 'taxable' | 'pretax' | 'roth';
@@ -43,6 +50,7 @@ export interface ModelingParams {
     rothConversionAmount: number;
     rothConversionStartAge: number;
     rothConversionEndAge: number;
+    enableRoth?: boolean;
 
     enableSEPP: boolean;
     seppStartAge: number;
@@ -51,6 +59,10 @@ export interface ModelingParams {
     enforceRothFiveYearRule?: boolean;
     phases?: ScenarioPhase[];
     stressTestEnabled?: boolean;
+
+    // Fixed Spend Options
+    useFixedSpend?: boolean;
+    expectedAnnualSpend?: number;
 }
 
 export interface ProjectionPoint {
@@ -72,6 +84,10 @@ export interface ProjectionPoint {
     convertedAmount: number;
     seppWithdrawal: number;
     taxesPaid: number;
+
+    withdrawalTaxable: number;
+    withdrawalPreTax: number;
+    withdrawalRoth: number;
 
     isRetired: boolean;
 }
@@ -186,11 +202,14 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
         rothConversionAmount,
         rothConversionStartAge,
         rothConversionEndAge,
+        enableRoth,
         enableSEPP,
         seppStartAge,
         withdrawalStrategy = 'sequence',
         enforceRothFiveYearRule = true,
         stressTestEnabled = false,
+        useFixedSpend = false,
+        expectedAnnualSpend = 0,
     } = params;
 
     let pretax = Math.max(0, params.currentPreTax);
@@ -206,6 +225,7 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
     const monthlyReturn = Math.pow(1 + annualReturn, 1 / 12) - 1;
     const monthlyInflation = Math.pow(1 + inflationRate, 1 / 12) - 1;
     let currentMonthlyContribution = monthlyContribution;
+    let currentExpectedAnnualSpend = expectedAnnualSpend;
 
     let seppAnnualAmount = 0;
     let seppCalculated = false;
@@ -223,6 +243,9 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
         convertedAmount: 0,
         seppWithdrawal: 0,
         taxesPaid: 0,
+        withdrawalTaxable: 0,
+        withdrawalPreTax: 0,
+        withdrawalRoth: 0,
         isRetired: currentAge >= retirementAge
     });
 
@@ -233,18 +256,25 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
         let yearConverted = 0;
         let yearTaxes = 0;
         let yearSepp = 0;
+        let yearWithdrawalTaxable = 0;
+        let yearWithdrawalPreTax = 0;
+        let yearWithdrawalRoth = 0;
         const isRetired = age >= retirementAge;
 
         if (enableSEPP && age >= seppStartAge && age < 59.5 && !seppCalculated && pretax > 0) {
             const n = Math.max(10, lifeExpectancy - age);
-            const r = annualReturn;
+            const r = Math.min(annualReturn, 0.05); // IRS 72(t) limit is roughly 5% or 120% of AFR
             seppAnnualAmount = (r === 0) ? (pretax / n) : (pretax * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1));
             seppCalculated = true;
         }
-        if (age >= 60) seppAnnualAmount = 0;
+
+        // SEPP distributions must continue for 5 years OR until age 59.5, whichever is later.
+        const seppEndAge = Math.max(seppStartAge + 5, 60); // 60 represents the year they turn 59.5
+        if (age >= seppEndAge) seppAnnualAmount = 0;
 
         let amountToConvert = 0;
-        if (age >= rothConversionStartAge && age <= rothConversionEndAge && pretax > 0) {
+        const isRothEnabled = enableRoth === true || (enableRoth === undefined && rothConversionAmount > 0);
+        if (isRothEnabled && age >= rothConversionStartAge && age <= rothConversionEndAge && pretax > 0) {
             amountToConvert = Math.min(pretax, rothConversionAmount);
         }
 
@@ -286,14 +316,18 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                 const growthFactor = 1 + (rothGrowth / (roth - rothGrowth));
                 rothBuckets = rothBuckets.map(b => ({ ...b, amount: b.amount * growthFactor }));
             }
-
             if (!isRetired) {
                 taxable += currentMonthlyContribution;
                 yearContributions += currentMonthlyContribution;
                 currentMonthlyContribution *= (1 + monthlyInflation);
             } else {
                 const totalNW = Math.max(0, pretax + roth + taxable);
-                let withdrawalNeed = totalNW * (activeWithdrawalRate / 12);
+                let withdrawalNeed = useFixedSpend && currentExpectedAnnualSpend
+                    ? (currentExpectedAnnualSpend / 12)
+                    : totalNW * (activeWithdrawalRate / 12);
+
+                // Increment expected spend for inflation
+                currentExpectedAnnualSpend *= (1 + monthlyInflation);
 
                 // Apply Aggregate Spending Adjustment
                 withdrawalNeed *= spendingMultiplier;
@@ -306,9 +340,13 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                         const actualSepp = Math.min(pretax, monthlyAllowedSepp);
                         pretax -= actualSepp;
                         yearSepp += actualSepp;
+                        yearWithdrawalPreTax += actualSepp;
                         remainingNeed -= actualSepp;
                         const tax = actualSepp * effectiveTaxRate;
-                        if (taxable >= tax) taxable -= tax;
+                        if (taxable >= tax) {
+                            taxable -= tax;
+                            yearWithdrawalTaxable += tax;
+                        }
                         else remainingNeed += tax;
                         yearTaxes += tax;
                     }
@@ -317,27 +355,31 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                         if (withdrawalStrategy === 'pro-rata') {
                             const currentTotal = pretax + roth + taxable;
                             if (currentTotal > 0) {
-                                let taxablePortion = (taxable / currentTotal) * remainingNeed;
-                                let pretaxPortion = (pretax / currentTotal) * remainingNeed;
-                                let rothPortion = (roth / currentTotal) * remainingNeed;
+                                const taxableRatio = taxable / currentTotal;
+                                const pretaxRatio = pretax / currentTotal;
+                                const rothRatio = roth / currentTotal;
 
-                                const fromTaxable = Math.min(taxable, taxablePortion);
+                                const drawFromTaxable = taxableRatio * remainingNeed;
+                                const fromTaxable = Math.min(taxable, drawFromTaxable);
                                 taxable -= fromTaxable;
-                                let carryover = taxablePortion - fromTaxable;
+                                yearWithdrawalTaxable += fromTaxable;
+                                const carryoverFromTaxable = drawFromTaxable - fromTaxable;
 
-                                let targetPretax = pretaxPortion + carryover;
+                                const drawFromPretax = pretaxRatio * remainingNeed + carryoverFromTaxable;
                                 const penaltyRate = age < 59.5 ? 0.10 : 0;
                                 const totalTaxRate = effectiveTaxRate + penaltyRate;
-                                const grossPretax = targetPretax / (1 - totalTaxRate);
+                                const grossPretax = drawFromPretax / (1 - totalTaxRate);
                                 const fromPretax = Math.min(pretax, grossPretax);
                                 const netPretax = fromPretax * (1 - totalTaxRate);
                                 pretax -= fromPretax;
+                                yearWithdrawalPreTax += fromPretax;
                                 yearTaxes += (fromPretax - netPretax);
-                                carryover = targetPretax - netPretax;
+                                const carryoverFromPretax = drawFromPretax - netPretax;
 
-                                let targetRoth = rothPortion + carryover;
-                                const rothResult = handleRothWithdrawal(targetRoth, roth, rothBuckets, age, enforceRothFiveYearRule);
+                                const drawFromRoth = rothRatio * remainingNeed + carryoverFromPretax;
+                                const rothResult = handleRothWithdrawal(drawFromRoth, roth, rothBuckets, age, enforceRothFiveYearRule);
                                 roth -= (rothResult.withdrawn + rothResult.taxes);
+                                yearWithdrawalRoth += rothResult.withdrawn;
                                 yearTaxes += rothResult.taxes;
                                 remainingNeed -= (fromTaxable + netPretax + rothResult.withdrawn);
                             } else {
@@ -346,6 +388,7 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                         } else {
                             const fromTaxable = Math.min(taxable, remainingNeed);
                             taxable -= fromTaxable;
+                            yearWithdrawalTaxable += fromTaxable;
                             remainingNeed -= fromTaxable;
 
                             if (remainingNeed > 0 && pretax > 0) {
@@ -355,6 +398,7 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                                 const actualPretax = Math.min(pretax, grossPretax);
                                 const netAvailable = actualPretax * (1 - totalTaxRate);
                                 pretax -= actualPretax;
+                                yearWithdrawalPreTax += actualPretax;
                                 yearTaxes += (actualPretax - netAvailable);
                                 remainingNeed -= netAvailable;
                             }
@@ -362,6 +406,7 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
                             if (remainingNeed > 0 && roth > 0) {
                                 const rothResult = handleRothWithdrawal(remainingNeed, roth, rothBuckets, age, enforceRothFiveYearRule);
                                 roth -= (rothResult.withdrawn + rothResult.taxes);
+                                yearWithdrawalRoth += rothResult.withdrawn;
                                 yearTaxes += rothResult.taxes;
                                 remainingNeed -= rothResult.withdrawn;
                             }
@@ -408,6 +453,9 @@ export function calculateProjection(params: ModelingParams): ProjectionResult {
             convertedAmount: yearConverted,
             seppWithdrawal: yearSepp,
             taxesPaid: yearTaxes,
+            withdrawalTaxable: yearWithdrawalTaxable,
+            withdrawalPreTax: yearWithdrawalPreTax,
+            withdrawalRoth: yearWithdrawalRoth,
             isRetired
         });
     }

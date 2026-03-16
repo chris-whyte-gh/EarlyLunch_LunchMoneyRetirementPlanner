@@ -1,21 +1,60 @@
 "use client";
 
 import { useState, useEffect, useMemo } from 'react';
-import { Asset, Transaction } from '@/lib/lunchmoney';
-import { calculateBuckets, calculateProjection, calculateMonthlyExpenses, ProjectionResult, ModelingParams, ScenarioPhase, calculateFireMetrics } from '@/lib/modeling';
+import { Asset, Transaction, Budget } from '@/lib/lunchmoney';
+import { calculateBuckets, calculateProjection, calculateMonthlyExpenses, ProjectionResult, ModelingParams, ScenarioPhase, calculateFireMetrics, calculateRealValue } from '@/lib/modeling';
 import { ProjectionChart } from './ProjectionChart';
 import { ConfigPanel } from './ConfigPanel';
 import { TopNav } from './TopNav';
 import { SettingsView } from './SettingsView';
 import { BeginnerGuide } from './BeginnerGuide';
-import { cn } from '@/lib/utils';
-import { TrendingUp, AlertTriangle, Settings2, Info, Award, Zap, Check, BarChart2 } from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { STORAGE_KEYS } from '@/lib/constants';
+import { TrendingUp, AlertTriangle, Settings2, Info, Award, Zap, Check } from 'lucide-react';
 import { AdvancedScenarios } from './AdvancedScenarios';
+import { WithdrawalChart } from './WithdrawalChart';
+import { Recommendations } from './Recommendations';
 
 interface DashboardProps {
     initialAssets: Asset[];
     initialTransactions: Transaction[];
 }
+
+// Define DEFAULT_PARAMS if it's a new constant, otherwise, the user's instruction implies replacing the inline object.
+// Assuming DEFAULT_PARAMS is a new constant that should be defined or imported.
+// For the purpose of this edit, I will assume it's a placeholder for the original default params.
+// If DEFAULT_PARAMS is not defined elsewhere, this would cause a reference error.
+// Given the instruction is to "remove unused imports" and "escape apostrophes" and then provides a diff,
+// I will apply the diff as-is, which includes changing the `params` initialization.
+// To make the code syntactically correct, I'll define a placeholder DEFAULT_PARAMS.
+// In a real scenario, DEFAULT_PARAMS would likely be imported or defined globally.
+const DEFAULT_PARAMS: ModelingParams = {
+    currentAge: 30,
+    retirementAge: 60,
+    lifeExpectancy: 90,
+
+    currentPreTax: 0,
+    currentRoth: 0,
+    currentTaxable: 0,
+
+    monthlyContribution: 1000,
+    annualReturn: 0.07,
+    inflationRate: 0.03,
+    safeWithdrawalRate: 0.04,
+
+    effectiveTaxRate: 0.15,
+    rothConversionAmount: 0,
+    rothConversionStartAge: 40,
+    rothConversionEndAge: 50,
+    enableSEPP: false,
+    seppStartAge: 40,
+    withdrawalStrategy: 'sequence',
+    enforceRothFiveYearRule: true,
+    phases: [],
+    useFixedSpend: false,
+    expectedAnnualSpend: 40000,
+};
+
 
 export function Dashboard() {
     const [loading, setLoading] = useState(true);
@@ -23,40 +62,17 @@ export function Dashboard() {
 
     // Load active tab on mount
     useEffect(() => {
-        const storedTab = localStorage.getItem('retirement_active_tab');
+        const storedTab = localStorage.getItem(STORAGE_KEYS.ACTIVE_TAB);
         if (storedTab) setActiveTab(storedTab);
     }, []);
 
     // Save active tab on change
     useEffect(() => {
-        localStorage.setItem('retirement_active_tab', activeTab);
+        localStorage.setItem(STORAGE_KEYS.ACTIVE_TAB, activeTab);
     }, [activeTab]);
 
     // Modeling State
-    const [params, setParams] = useState<ModelingParams>({
-        currentAge: 30,
-        retirementAge: 60,
-        lifeExpectancy: 90,
-
-        currentPreTax: 0,
-        currentRoth: 0,
-        currentTaxable: 0,
-
-        monthlyContribution: 1000,
-        annualReturn: 0.07,
-        inflationRate: 0.03,
-        safeWithdrawalRate: 0.04,
-
-        effectiveTaxRate: 0.15,
-        rothConversionAmount: 0,
-        rothConversionStartAge: 40,
-        rothConversionEndAge: 50,
-        enableSEPP: false,
-        seppStartAge: 40,
-        withdrawalStrategy: 'sequence',
-        enforceRothFiveYearRule: true,
-        phases: [],
-    });
+    const [params, setParams] = useState<ModelingParams>(DEFAULT_PARAMS);
 
     const [projectionResult, setProjectionResult] = useState<ProjectionResult>({ points: [] });
     const [birthYear, setBirthYear] = useState<number | undefined>(undefined);
@@ -70,7 +86,7 @@ export function Dashboard() {
 
     // Load saved scenario params on mount
     useEffect(() => {
-        const savedParamsStr = localStorage.getItem('retirement_scenario_params');
+        const savedParamsStr = localStorage.getItem(STORAGE_KEYS.SCENARIO_PARAMS);
         if (savedParamsStr) {
             try {
                 const savedParams = JSON.parse(savedParamsStr);
@@ -92,6 +108,8 @@ export function Dashboard() {
                     withdrawalStrategy: savedParams.withdrawalStrategy ?? prev.withdrawalStrategy,
                     enforceRothFiveYearRule: savedParams.enforceRothFiveYearRule ?? prev.enforceRothFiveYearRule,
                     phases: savedParams.phases ?? prev.phases,
+                    useFixedSpend: savedParams.useFixedSpend ?? prev.useFixedSpend,
+                    expectedAnnualSpend: savedParams.expectedAnnualSpend ?? prev.expectedAnnualSpend,
                 }));
             } catch (e) {
                 console.error("Failed to load scenario params", e);
@@ -120,8 +138,10 @@ export function Dashboard() {
             withdrawalStrategy: params.withdrawalStrategy,
             enforceRothFiveYearRule: params.enforceRothFiveYearRule,
             phases: params.phases,
+            useFixedSpend: params.useFixedSpend,
+            expectedAnnualSpend: params.expectedAnnualSpend,
         };
-        localStorage.setItem('retirement_scenario_params', JSON.stringify(paramsToSave));
+        localStorage.setItem(STORAGE_KEYS.SCENARIO_PARAMS, JSON.stringify(paramsToSave));
     }, [params, isParamsLoaded]);
 
     // Calculate Derived Params when Data Loads
@@ -129,9 +149,9 @@ export function Dashboard() {
         async function loadData() {
             try {
                 // Check for token in localStorage
-                const token = localStorage.getItem('lunch_money_token');
-                const birthYearStr = localStorage.getItem('retirement_birth_year');
-                const birthMonthStr = localStorage.getItem('retirement_birth_month');
+                const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+                const birthYearStr = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
+                const birthMonthStr = localStorage.getItem(STORAGE_KEYS.BIRTH_MONTH);
 
                 const headers: HeadersInit = {};
                 if (token) {
@@ -156,8 +176,8 @@ export function Dashboard() {
                 // Unpack excluded IDs and spending sources
                 let excludedIds: number[] = [];
                 let spendingIds: number[] = [];
-                const excludedStr = localStorage.getItem('excluded_asset_ids');
-                const spendingStr = localStorage.getItem('spending_source_ids');
+                const excludedStr = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
+                const spendingStr = localStorage.getItem(STORAGE_KEYS.SPENDING_SOURCES);
 
                 if (excludedStr) {
                     try { excludedIds = JSON.parse(excludedStr); } catch (e) { console.error("Error parsing excluded ids", e); }
@@ -206,13 +226,30 @@ export function Dashboard() {
                     setBirthYear(undefined);
                 }
 
-                setParams(prev => ({
-                    ...prev,
-                    currentAge: calculatedAge ?? prev.currentAge,
-                    currentPreTax: buckets.pretax,
-                    currentRoth: buckets.roth,
-                    currentTaxable: buckets.taxable,
-                }));
+                // Calculate annual spend from budgets
+                let calculatedAnnualSpend = undefined;
+                if (data.budgets && (data.budgets as Budget[]).length > 0) {
+                    const budgetTotal = (data.budgets as Budget[])
+                        .filter(b => !b.is_income && !b.exclude_from_budget)
+                        .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+                    if (budgetTotal > 0) {
+                        calculatedAnnualSpend = budgetTotal * 12;
+                    }
+                }
+
+                setParams(prev => {
+                    // We only want to override expectedAnnualSpend if it's the first time or demo
+                    const shouldOverrideSpend = !localStorage.getItem(STORAGE_KEYS.SCENARIO_PARAMS) || token === 'demo';
+
+                    return {
+                        ...prev,
+                        currentAge: calculatedAge ?? prev.currentAge,
+                        currentPreTax: buckets.pretax,
+                        currentRoth: buckets.roth,
+                        currentTaxable: buckets.taxable,
+                        expectedAnnualSpend: (shouldOverrideSpend && calculatedAnnualSpend) ? calculatedAnnualSpend : prev.expectedAnnualSpend,
+                    };
+                });
 
                 // Calculate spending from transactions
                 if (data.transactions && spendingIds.length > 0) {
@@ -242,13 +279,10 @@ export function Dashboard() {
         setProjectionResult(result);
     }, [params]);
 
-    const formatMoney = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n);
 
     // Helper to get value based on view mode (nominal vs real)
     const getValue = (amount: number, age: number) => {
-        if (viewMode === 'nominal') return amount;
-        const yearsInFuture = Math.max(0, age - params.currentAge);
-        return amount / Math.pow(1 + params.inflationRate, yearsInFuture);
+        return calculateRealValue(amount, age, params.currentAge, params.inflationRate, viewMode);
     };
 
     const totalNetWorth = params.currentPreTax + params.currentRoth + params.currentTaxable;
@@ -258,10 +292,12 @@ export function Dashboard() {
         const retirementPoint = projectionResult.points.find(p => p.age === params.retirementAge);
         if (!retirementPoint) return null;
 
-        // Use actual spend if toggled, otherwise use projected monthly spend
+        // Use actual spend if toggled, otherwise use fixed spend if toggled, otherwise use projected SWR spend
         const targetMonthlySpend = (useActualSpend && estimatedMonthlySpend > 0)
             ? estimatedMonthlySpend
-            : getValue((retirementPoint.totalNetWorth * (params.safeWithdrawalRate / 12)), params.retirementAge);
+            : params.useFixedSpend && params.expectedAnnualSpend
+                ? (params.expectedAnnualSpend / 12)
+                : calculateRealValue((retirementPoint.totalNetWorth * (params.safeWithdrawalRate / 12)), params.retirementAge, params.currentAge, params.inflationRate, 'real');
 
         const targetNW = (targetMonthlySpend * 12) / params.safeWithdrawalRate;
 
@@ -298,7 +334,7 @@ export function Dashboard() {
             monthlySavingsGap,
             actualCalculatedSpend: estimatedMonthlySpend
         };
-    }, [projectionResult, params, totalNetWorth, useActualSpend, estimatedMonthlySpend, viewMode]);
+    }, [projectionResult, params, totalNetWorth, useActualSpend, estimatedMonthlySpend]);
 
     if (loading) {
         return <div className="h-screen w-full flex items-center justify-center text-muted-foreground">Loading Financial Data...</div>
@@ -383,7 +419,7 @@ export function Dashboard() {
                                                 <div className="space-y-2">
                                                     <div>
                                                         <span className="font-bold text-emerald-300">Real:</span>
-                                                        <span className="text-slate-300"> The <strong>buying power</strong> of that amount in <strong>today's dollars</strong>.</span>
+                                                        <span className="text-slate-300"> The <strong>buying power</strong> of that amount in <strong>today&apos;s dollars</strong>.</span>
                                                     </div>
                                                     <div>
                                                         <span className="font-bold text-amber-300">Nominal:</span>
@@ -396,7 +432,7 @@ export function Dashboard() {
 
                                     <div className="px-5 py-3 bg-white border border-border rounded-xl flex flex-col items-end shadow-sm ml-4">
                                         <span className="text-xs text-muted-foreground uppercase font-bold tracking-wider mb-0.5">Current Retirement Portfolio</span>
-                                        <span className="font-mono text-2xl font-bold text-primary tracking-tight">{formatMoney(totalNetWorth)}</span>
+                                        <span className="font-mono text-2xl font-bold text-primary tracking-tight">{formatCurrency(totalNetWorth)}</span>
                                     </div>
                                 </div>
                             )}
@@ -420,6 +456,7 @@ export function Dashboard() {
                         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
                             {/* Main Chart Area */}
                             <div className="lg:col-span-8 space-y-6">
+                                <Recommendations params={params} result={projectionResult} />
                                 <ProjectionChart
                                     data={projection}
                                     retirementAge={params.retirementAge}
@@ -444,12 +481,20 @@ export function Dashboard() {
                                     }}
                                 />
 
+                                <WithdrawalChart
+                                    data={projection}
+                                    retirementAge={params.retirementAge}
+                                    viewMode={viewMode}
+                                    inflationRate={params.inflationRate}
+                                    currentAge={params.currentAge}
+                                />
+
                                 {/* Stats Grid */}
                                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                                     <div className="p-4 bg-card border border-border rounded-lg">
                                         <h4 className="text-sm text-muted-foreground mb-1">Projected Portfolio @ Retirement</h4>
                                         <p className="text-lg md:text-2xl font-bold text-foreground truncate">
-                                            {formatMoney(getValue(projectionResult.points.find(p => p.age === params.retirementAge)?.totalNetWorth || 0, params.retirementAge))}
+                                            {formatCurrency(getValue(projectionResult.points.find(p => p.age === params.retirementAge)?.totalNetWorth || 0, params.retirementAge))}
                                         </p>
                                     </div>
                                     <div className="p-4 bg-card border border-border rounded-lg relative group overflow-hidden">
@@ -473,11 +518,11 @@ export function Dashboard() {
                                             )}
                                         </div>
                                         <p className={cn("text-lg md:text-2xl font-bold truncate relative z-10", fireMetrics?.isCoastFire ? "text-green-600" : "text-foreground")}>
-                                            {fireMetrics ? formatMoney(fireMetrics.coastFireNumber) : '---'}
+                                            {fireMetrics ? formatCurrency(fireMetrics.coastFireNumber) : '---'}
                                         </p>
                                         {useActualSpend && estimatedMonthlySpend > 0 && (
                                             <p className="text-[10px] text-blue-600 font-medium mt-1 animate-in fade-in slide-in-from-top-1 relative z-10">
-                                                Based on {formatMoney(estimatedMonthlySpend)}/mo actual spend
+                                                Based on {formatCurrency(estimatedMonthlySpend)}/mo actual spend
                                             </p>
                                         )}
 
@@ -492,13 +537,13 @@ export function Dashboard() {
                                     <div className="p-4 bg-card border border-border rounded-lg">
                                         <h4 className="text-sm text-muted-foreground mb-1">Monthly Safe Withdrawal</h4>
                                         <p className="text-lg md:text-2xl font-bold text-foreground truncate">
-                                            {formatMoney(getValue((projectionResult.points.find(p => p.age === params.retirementAge)?.totalNetWorth || 0), params.retirementAge) * (params.safeWithdrawalRate / 12))}
+                                            {formatCurrency(getValue((projectionResult.points.find(p => p.age === params.retirementAge)?.totalNetWorth || 0), params.retirementAge) * (params.safeWithdrawalRate / 12))}
                                         </p>
                                     </div>
                                     <div className="p-4 bg-card border border-border rounded-lg">
                                         <h4 className="text-sm text-muted-foreground mb-1">Age 90 Portfolio Value</h4>
                                         <p className="text-2xl font-bold text-foreground">
-                                            {formatMoney(getValue(projection.find(p => p.age === 90)?.totalNetWorth || 0, 90))}
+                                            {formatCurrency(getValue(projection.find(p => p.age === 90)?.totalNetWorth || 0, 90))}
                                         </p>
                                     </div>
                                 </div>
@@ -511,7 +556,7 @@ export function Dashboard() {
                                                 <Award className="h-5 w-5 text-emerald-600" />
                                             </div>
                                             <div>
-                                                <h3 className="text-emerald-900 font-bold text-sm">You've reached Coast FIRE!</h3>
+                                                <h3 className="text-emerald-900 font-bold text-sm">You&apos;ve reached Coast FIRE!</h3>
                                                 <p className="text-emerald-800 text-[11px] leading-tight">
                                                     Your current portfolio will grow to cover your retirement spend by age {params.retirementAge} with no further contributions.
                                                 </p>
@@ -525,7 +570,7 @@ export function Dashboard() {
                                             <div>
                                                 <h3 className="text-blue-900 font-bold text-sm">{Math.round(fireMetrics?.coastFireProgress || 0)}% of the way to Coast FIRE</h3>
                                                 <p className="text-blue-800 text-[11px] leading-tight">
-                                                    You need {formatMoney(fireMetrics?.gapToCoastFire || 0)} more today to potentially stop saving and still retire on time.
+                                                    You need {formatCurrency(fireMetrics?.gapToCoastFire || 0)} more today to potentially stop saving and still retire on time.
                                                 </p>
                                             </div>
                                         </div>
@@ -537,9 +582,9 @@ export function Dashboard() {
                                                 <Zap className="h-5 w-5 text-amber-600" />
                                             </div>
                                             <div>
-                                                <h3 className="text-amber-900 font-bold text-sm">Save {formatMoney(fireMetrics.monthlySavingsGap)} more / month</h3>
+                                                <h3 className="text-amber-900 font-bold text-sm">Save {formatCurrency(fireMetrics.monthlySavingsGap)} more / month</h3>
                                                 <p className="text-amber-800 text-[11px] leading-tight font-normal">
-                                                    Adding this would bridge the gap to your {formatMoney(fireMetrics.targetPortfolio)} goal at age {params.retirementAge}.
+                                                    Adding this would bridge the gap to your {formatCurrency(fireMetrics.targetPortfolio)} goal at age {params.retirementAge}.
                                                 </p>
                                             </div>
                                         </div>
@@ -551,7 +596,7 @@ export function Dashboard() {
                                             <div>
                                                 <h3 className="text-emerald-900 font-bold text-sm">On Track for Retirement</h3>
                                                 <p className="text-emerald-800 text-[11px] leading-tight">
-                                                    Your current plan is projected to meet or exceed your target portfolio of {formatMoney(fireMetrics?.targetPortfolio || 0)}.
+                                                    Your current plan is projected to meet or exceed your target portfolio of {formatCurrency(fireMetrics?.targetPortfolio || 0)}.
                                                 </p>
                                             </div>
                                         </div>

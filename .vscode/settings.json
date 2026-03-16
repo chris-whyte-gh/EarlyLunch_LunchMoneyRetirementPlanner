@@ -1,0 +1,5 @@
+{
+    "diffEditor.renderSideBySide": true,
+    "diffEditor.useInlineViewWhenSpaceIsLimited": false,
+    "diffEditor.ignoreTrimWhitespace": false
+}
