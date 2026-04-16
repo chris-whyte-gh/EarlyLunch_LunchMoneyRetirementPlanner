@@ -16,9 +16,9 @@ bun dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<img width="1325" height="787" alt="image" src="https://github.com/user-attachments/assets/fa21a0d7-e71a-44da-a4ee-d00a06cd2c8b" />
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+<img width="1230" height="782" alt="image" src="https://github.com/user-attachments/assets/9634ce79-ab0f-4fef-a1dd-ed3e9cee406b" />
 
 ## Learn More
 
