@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ModelingParams } from '@/lib/modeling';
-import { cn } from '@/lib/utils';
-import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info } from 'lucide-react';
+import { cn, formatCurrency } from '@/lib/utils';
+import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
+import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
+import { STORAGE_KEYS } from '@/lib/constants';
 
 interface QuickStartProps {
     params: ModelingParams;
@@ -24,6 +26,74 @@ interface QuickStartQuestion {
 export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps) {
     const [currentStep, setCurrentStep] = useState(0);
     const [showResults, setShowResults] = useState(false);
+    const [assets, setAssets] = useState<Asset[]>([]);
+    const [transactions, setTransactions] = useState<Transaction[]>([]);
+    const [loadingData, setLoadingData] = useState(false);
+    const [dataError, setDataError] = useState<string | null>(null);
+    const [hasLunchMoneyToken, setHasLunchMoneyToken] = useState(false);
+
+    // Check for LunchMoney token and fetch data on mount
+    useEffect(() => {
+        const checkLunchMoneyConnection = async () => {
+            const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+            if (token && token !== 'your_token_here') {
+                setHasLunchMoneyToken(true);
+                await fetchLunchMoneyData(token);
+            }
+        };
+        checkLunchMoneyConnection();
+    }, []);
+
+    const fetchLunchMoneyData = async (token: string) => {
+        setLoadingData(true);
+        setDataError(null);
+        
+        try {
+            const client = getLunchMoneyClient(token);
+            const [assetsData, transactionsData] = await Promise.all([
+                client.getAssets(),
+                client.getTransactions()
+            ]);
+            
+            setAssets(assetsData);
+            setTransactions(transactionsData);
+            
+            // Auto-populate savings amount with real data
+            const totalSavings = calculateTotalSavings(assetsData);
+            const monthlySavings = calculateMonthlySavings(transactionsData);
+            
+            onChange({
+                ...params,
+                currentTaxable: totalSavings,
+                monthlyContribution: monthlySavings,
+                currentPreTax: 0, // Could be calculated from asset types
+                currentRoth: 0,   // Could be calculated from asset types
+            });
+        } catch (error) {
+            console.error('Failed to fetch LunchMoney data:', error);
+            setDataError('Unable to connect to LunchMoney. Please check your token.');
+        } finally {
+            setLoadingData(false);
+        }
+    };
+
+    const calculateTotalSavings = (assetsData: Asset[]): number => {
+        return assetsData
+            .filter(asset => asset.balance && parseFloat(asset.balance) > 0)
+            .reduce((total, asset) => total + parseFloat(asset.balance), 0);
+    };
+
+    const calculateMonthlySavings = (transactionsData: Transaction[]): number => {
+        // Calculate average monthly income from the last 3 months
+        const threeMonthsAgo = new Date();
+        threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+        
+        const incomeTransactions = transactionsData
+            .filter(t => new Date(t.date) >= threeMonthsAgo && parseFloat(t.amount) > 0)
+            .reduce((total, t) => total + parseFloat(t.amount), 0);
+            
+        return Math.round(incomeTransactions / 3); // Average per month
+    };
 
     const questions: QuickStartQuestion[] = [
         {
@@ -44,18 +114,18 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         },
         {
             id: 'currentTaxable',
-            label: "How much do you have saved?",
-            description: "Total amount you've saved across all accounts",
-            icon: <DollarSign className="w-6 h-6" />,
+            label: hasLunchMoneyToken ? "Your current savings" : "How much do you have saved?",
+            description: hasLunchMoneyToken ? `Based on your ${assets.length} connected accounts` : "Total amount you've saved across all accounts",
+            icon: hasLunchMoneyToken ? <Wallet className="w-6 h-6" /> : <DollarSign className="w-6 h-6" />,
             placeholder: "e.g., 50000",
             suffix: "$",
             step: 1000
         },
         {
             id: 'monthlyContribution',
-            label: "How much can you save monthly?",
-            description: "Amount you can add to your retirement savings each month",
-            icon: <PiggyBank className="w-6 h-6" />,
+            label: hasLunchMoneyToken ? "Your monthly savings rate" : "How much can you save monthly?",
+            description: hasLunchMoneyToken ? "Based on your recent income patterns" : "Amount you can add to your retirement savings each month",
+            icon: hasLunchMoneyToken ? <CreditCard className="w-6 h-6" /> : <PiggyBank className="w-6 h-6" />,
             placeholder: "e.g., 1000",
             suffix: "$",
             step: 100
@@ -201,6 +271,19 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
 
     return (
         <div className="bg-white border border-border rounded-xl p-8 shadow-sm max-w-2xl mx-auto">
+            {/* LunchMoney Connection Status */}
+            {hasLunchMoneyToken && (
+                <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center gap-3">
+                        <Wallet className="w-5 h-5 text-green-600" />
+                        <div className="text-sm text-green-800">
+                            <p className="font-medium">Connected to LunchMoney</p>
+                            <p className="text-xs">Using your real account data for accurate projections</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Progress Bar */}
             <div className="mb-8">
                 <div className="flex items-center justify-between text-sm text-muted-foreground mb-2">
@@ -217,6 +300,30 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
 
             {/* Question */}
             <div className="space-y-6">
+                {loadingData && (
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                            <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-sm text-blue-800">
+                                <p className="font-medium">Fetching your account data...</p>
+                                <p className="text-xs">Connecting to LunchMoney to get your real balances</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {dataError && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                        <div className="flex items-center gap-3">
+                            <Info className="w-5 h-5 text-amber-600" />
+                            <div className="text-sm text-amber-800">
+                                <p className="font-medium">Connection Issue</p>
+                                <p className="text-xs">{dataError}</p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary">
                         {currentQuestion.icon}
