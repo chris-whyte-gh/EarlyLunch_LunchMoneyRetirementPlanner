@@ -14,6 +14,7 @@ import { TrendingUp, AlertTriangle, Settings2, Info, Award, Zap, Check } from 'l
 import { AdvancedScenarios } from './AdvancedScenarios';
 import { WithdrawalChart } from './WithdrawalChart';
 import { Recommendations } from './Recommendations';
+import { QuickStart } from './QuickStart';
 
 interface DashboardProps {
     initialAssets: Asset[];
@@ -83,6 +84,7 @@ export function Dashboard() {
     const [spendingSourceIds, setSpendingSourceIds] = useState<number[]>([]);
     const [useActualSpend, setUseActualSpend] = useState(false);
     const [estimatedMonthlySpend, setEstimatedMonthlySpend] = useState(0);
+    const [showQuickStart, setShowQuickStart] = useState(true);
 
     // Load saved scenario params on mount
     useEffect(() => {
@@ -344,7 +346,12 @@ export function Dashboard() {
 
     return (
         <div className="min-h-screen bg-[#F6F8FA]">
-            <TopNav activeTab={activeTab} onTabChange={setActiveTab} />
+            <TopNav 
+                activeTab={activeTab} 
+                onTabChange={setActiveTab}
+                onQuickStart={() => setShowQuickStart(true)}
+                showQuickStartButton={!showQuickStart}
+            />
 
             <div className="max-w-7xl mx-auto p-8 space-y-8">
                 {activeTab === 'settings' ? (
@@ -379,6 +386,12 @@ export function Dashboard() {
                             Your data never leaves your machine.
                         </p>
                     </div>
+                ) : showQuickStart ? (
+                    <QuickStart 
+                        params={params} 
+                        onChange={setParams}
+                        onAdvancedMode={() => setShowQuickStart(false)}
+                    />
                 ) : (
                     <>
                         <header className="flex items-center justify-between">

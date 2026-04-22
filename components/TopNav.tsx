@@ -1,14 +1,16 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Smile } from "lucide-react";
+import { Smile, ArrowLeft } from "lucide-react";
 
 interface TopNavProps {
     activeTab: string;
     onTabChange: (tab: string) => void;
+    onQuickStart?: () => void;
+    showQuickStartButton?: boolean;
 }
 
-export function TopNav({ activeTab, onTabChange }: TopNavProps) {
+export function TopNav({ activeTab, onTabChange, onQuickStart, showQuickStartButton }: TopNavProps) {
     const secondaryTabs = [
         { name: "HOW TO USE", value: "guide" },
         { name: "OVERVIEW", value: "overview" },
@@ -49,6 +51,17 @@ export function TopNav({ activeTab, onTabChange }: TopNavProps) {
                         </button>
                     ))}
                 </nav>
+
+                {/* QuickStart Button */}
+                {showQuickStartButton && onQuickStart && (
+                    <button
+                        onClick={onQuickStart}
+                        className="ml-6 flex items-center gap-2 px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg transition-colors border border-blue-200"
+                    >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span className="text-xs font-bold">Quick Start</span>
+                    </button>
+                )}
             </div>
         </div>
     );
