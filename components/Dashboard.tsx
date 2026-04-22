@@ -15,6 +15,7 @@ import { AdvancedScenarios } from './AdvancedScenarios';
 import { WithdrawalChart } from './WithdrawalChart';
 import { Recommendations } from './Recommendations';
 import { QuickStart } from './QuickStart';
+import { SimpleDashboard } from './SimpleDashboard';
 
 interface DashboardProps {
     initialAssets: Asset[];
@@ -85,6 +86,7 @@ export function Dashboard() {
     const [useActualSpend, setUseActualSpend] = useState(false);
     const [estimatedMonthlySpend, setEstimatedMonthlySpend] = useState(0);
     const [showQuickStart, setShowQuickStart] = useState(true);
+    const [dashboardMode, setDashboardMode] = useState<'simple' | 'details' | 'advanced'>('simple');
 
     // Load saved scenario params on mount
     useEffect(() => {
@@ -390,17 +392,126 @@ export function Dashboard() {
                     <QuickStart 
                         params={params} 
                         onChange={setParams}
-                        onAdvancedMode={() => setShowQuickStart(false)}
+                        onAdvancedMode={() => {
+                            setShowQuickStart(false);
+                            setDashboardMode('simple');
+                        }}
                     />
+                ) : dashboardMode === 'simple' ? (
+                    <SimpleDashboard 
+                        params={params}
+                        projectionResult={projectionResult}
+                        onDetailsMode={() => setDashboardMode('details')}
+                        onAdvancedMode={() => setDashboardMode('advanced')}
+                        onParamsChange={setParams}
+                    />
+                ) : dashboardMode === 'details' ? (
+                    <>
+                        {/* Details Mode - Simplified version of advanced */}
+                        <header className="flex items-center justify-between mb-8">
+                            <div>
+                                <h1 className="text-3xl font-bold text-foreground mb-2">
+                                    Detailed Retirement Analysis
+                                </h1>
+                                <p className="text-muted-foreground">
+                                    Comprehensive charts and projections for your retirement planning
+                                </p>
+                            </div>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={() => setDashboardMode('simple')}
+                                    className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg transition-colors"
+                                >
+                                    Simple View
+                                </button>
+                                <button
+                                    onClick={() => setDashboardMode('advanced')}
+                                    className="px-4 py-2 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors"
+                                >
+                                    Advanced
+                                </button>
+                            </div>
+                        </header>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <div className="lg:col-span-2 space-y-8">
+                                {/* Main Projection Chart */}
+                                <ProjectionChart 
+                                    data={projectionResult.points} 
+                                    viewMode={viewMode}
+                                    retirementAge={params.retirementAge}
+                                    inflationRate={params.inflationRate}
+                                    currentAge={params.currentAge}
+                                />
+                                
+                                {/* Withdrawal Chart */}
+                                <WithdrawalChart 
+                                    data={projectionResult.points}
+                                    viewMode={viewMode}
+                                    retirementAge={params.retirementAge}
+                                    inflationRate={params.inflationRate}
+                                    currentAge={params.currentAge}
+                                />
+                            </div>
+
+                            <div className="lg:col-span-1 space-y-8">
+                                {/* Key Metrics */}
+                                <div className="bg-white border border-border rounded-xl p-6 shadow-sm">
+                                    <h3 className="text-lg font-semibold text-foreground mb-4">Key Results</h3>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <div className="text-sm text-muted-foreground">Monthly Retirement Income</div>
+                                            <div className="text-2xl font-bold text-primary">
+                                                {formatCurrency((projectionResult.points.find(p => p.age === params.retirementAge)?.totalNetWorth || 0) * params.safeWithdrawalRate / 12)}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div className="text-sm text-muted-foreground">Years to Retirement</div>
+                                            <div className="text-2xl font-bold text-blue-600">
+                                                {params.retirementAge - params.currentAge}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Quick Settings */}
+                                <ConfigPanel params={params} onChange={setParams} activeTab={activeTab} birthYear={birthYear} />
+                            </div>
+                        </div>
+                    </>
                 ) : (
                     <>
                         <header className="flex items-center justify-between">
                             <div>
                                 <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-4">
-                                    Welcome, Chris!
+                                    Advanced Retirement Planning
                                 </h1>
-
+                                <p className="text-muted-foreground">
+                                    Full control over every aspect of your retirement strategy
+                                </p>
                             </div>
+                            <div className="flex gap-3 items-center">
+                                <div className="flex gap-2 bg-gray-100 rounded-lg p-1">
+                                    <button
+                                        onClick={() => setDashboardMode('simple')}
+                                        className="px-3 py-1.5 rounded-md text-xs font-bold transition-all text-gray-600 hover:text-gray-900"
+                                    >
+                                        Simple
+                                    </button>
+                                    <button
+                                        onClick={() => setDashboardMode('details')}
+                                        className="px-3 py-1.5 rounded-md text-xs font-bold transition-all text-gray-600 hover:text-gray-900"
+                                    >
+                                        Details
+                                    </button>
+                                    <button
+                                        onClick={() => setDashboardMode('advanced')}
+                                        className="px-3 py-1.5 rounded-md text-xs font-bold transition-all bg-white text-gray-900 shadow-sm"
+                                    >
+                                        Advanced
+                                    </button>
+                                </div>
+                                </div>
                             {(activeTab === 'overview' || activeTab === 'tax') && (
                                 <div className="flex gap-8 items-center">
                                     {/* Real vs Nominal Toggle */}
