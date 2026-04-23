@@ -3,6 +3,19 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Asset, Transaction, Budget } from '@/lib/lunchmoney';
 import { calculateBuckets, calculateProjection, calculateMonthlyExpenses, ProjectionResult, ModelingParams, ScenarioPhase, calculateFireMetrics, calculateRealValue } from '@/lib/modeling';
+import { SimpleRetirementParams, calculateSimpleRetirement } from '@/lib/simpleModeling';
+
+// Bridge function to convert complex ModelingParams to SimpleRetirementParams
+function convertToSimpleParams(complexParams: ModelingParams): SimpleRetirementParams {
+    return {
+        currentAge: complexParams.currentAge,
+        retirementAge: complexParams.retirementAge,
+        totalSavings: complexParams.currentTaxable + complexParams.currentPreTax + complexParams.currentRoth,
+        monthlySavings: complexParams.monthlyContribution,
+        annualReturn: 0.07, // Fixed 7% return for simplicity
+        withdrawalRate: 0.04, // Fixed 4% withdrawal rate
+    };
+}
 import { ProjectionChart } from './ProjectionChart';
 import { ConfigPanel } from './ConfigPanel';
 import { TopNav } from './TopNav';
@@ -390,8 +403,20 @@ export function Dashboard() {
                     </div>
                 ) : showQuickStart ? (
                     <QuickStart 
-                        params={params} 
-                        onChange={setParams}
+                        params={convertToSimpleParams(params)} 
+                        onChange={(simpleParams) => {
+                            // Convert simple params back to complex params to maintain compatibility
+                            const updatedComplexParams: ModelingParams = {
+                                ...params,
+                                currentAge: simpleParams.currentAge,
+                                retirementAge: simpleParams.retirementAge,
+                                currentTaxable: simpleParams.totalSavings * 0.25, // Approximate split
+                                currentPreTax: simpleParams.totalSavings * 0.5,
+                                currentRoth: simpleParams.totalSavings * 0.25,
+                                monthlyContribution: simpleParams.monthlySavings,
+                            };
+                            setParams(updatedComplexParams);
+                        }}
                         onAdvancedMode={() => {
                             setShowQuickStart(false);
                             setDashboardMode('simple');
