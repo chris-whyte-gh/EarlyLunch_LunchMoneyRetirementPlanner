@@ -31,7 +31,33 @@ export function SettingsView() {
             if (!res.ok) throw new Error(`API Error: ${res.status}`);
 
             const data = await res.json();
-            setAssets(data.assets || []);
+            const fetchedAssets = data.assets || [];
+            setAssets(fetchedAssets);
+            
+            // Auto-set Income/Spending checkboxes based on categorization
+            const autoExcludedIds: number[] = [];
+            const autoSpendingSourceIds: number[] = [];
+            
+            fetchedAssets.forEach((asset: Asset) => {
+                const category = categorizeAsset(asset);
+                // Retirement accounts (pre-tax, roth) are income
+                // Taxable accounts (checking, savings, brokerage) are spending sources
+                if (category === 'taxable') {
+                    autoSpendingSourceIds.push(asset.id);
+                }
+                // Other accounts might be things like loans that should be excluded
+                if (category === 'other') {
+                    autoExcludedIds.push(asset.id);
+                }
+            });
+            
+            // Only update if user hasn't manually set preferences
+            if (excludedIds.length === 0) {
+                setExcludedIds(autoExcludedIds);
+            }
+            if (spendingSourceIds.length === 0) {
+                setSpendingSourceIds(autoSpendingSourceIds);
+            }
         } catch (e: any) {
             setDebugError(e.message);
             setAssets([]);
