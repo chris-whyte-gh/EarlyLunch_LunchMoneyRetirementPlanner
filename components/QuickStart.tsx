@@ -38,6 +38,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     useEffect(() => {
         const checkLunchMoneyConnection = async () => {
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
+            console.log('QuickStart - Token check:', { token: token ? 'exists' : 'none', tokenValue: token });
             if (token && token !== 'your_token_here') {
                 setHasLunchMoneyToken(true);
                 await fetchLunchMoneyData(token);
@@ -247,12 +248,15 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     </div>
 
                     {/* Categorized Assets Display */}
-                    {hasLunchMoneyToken && assets.length > 0 && (
-                        (() => {
-                            console.log('Debug - Display condition met:', { hasLunchMoneyToken, assetsLength: assets.length, categorizedAssets });
-                            return true;
-                        })()
-                    ) && (
+                    {(() => {
+                        console.log('QuickStart - Display check:', { 
+                            hasLunchMoneyToken, 
+                            assetsLength: assets.length, 
+                            categorizedAssets,
+                            shouldShow: hasLunchMoneyToken && assets.length > 0 
+                        });
+                        return hasLunchMoneyToken && assets.length > 0;
+                    })() && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-3">
                                 <Wallet className="w-5 h-5 text-blue-600" />
