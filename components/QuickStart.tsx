@@ -247,34 +247,30 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     </div>
 
                     {/* Categorized Assets Display */}
-                    {(() => {
-                        console.log('Debug - Display condition:', { hasLunchMoneyToken, assetsLength: assets.length, categorizedAssets });
-                        return hasLunchMoneyToken && assets.length > 0;
-                    })() && (
+                    {hasLunchMoneyToken && assets.length > 0 && (
+                        (() => {
+                            console.log('Debug - Display condition met:', { hasLunchMoneyToken, assetsLength: assets.length, categorizedAssets });
+                            return true;
+                        })()
+                    ) && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-3">
                                 <Wallet className="w-5 h-5 text-blue-600" />
                                 <h3 className="font-semibold text-blue-900">Your Accounts (Auto-Categorized)</h3>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                                {categorizedAssets.taxable > 0 && (
-                                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                        <div className="font-medium text-gray-900">Taxable</div>
-                                        <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable)}</div>
-                                    </div>
-                                )}
-                                {categorizedAssets.preTax > 0 && (
-                                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                        <div className="font-medium text-gray-900">Pre-Tax</div>
-                                        <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.preTax)}</div>
-                                    </div>
-                                )}
-                                {categorizedAssets.roth > 0 && (
-                                    <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                        <div className="font-medium text-gray-900">Roth</div>
-                                        <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth)}</div>
-                                    </div>
-                                )}
+                                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                                    <div className="font-medium text-gray-900">Taxable</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable)}</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                                    <div className="font-medium text-gray-900">Pre-Tax</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.preTax)}</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                                    <div className="font-medium text-gray-900">Roth</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth)}</div>
+                                </div>
                             </div>
                             <p className="text-xs text-blue-700 mt-3">
                                 We automatically categorized your {assets.length} accounts based on account types
