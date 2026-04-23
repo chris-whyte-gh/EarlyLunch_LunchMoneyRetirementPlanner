@@ -196,6 +196,14 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         // Use total portfolio value from all categorized assets
         const totalCurrentSavings = params.currentTaxable + params.currentPreTax + params.currentRoth;
         
+        console.log('QuickStart - Portfolio calculation:', {
+            currentTaxable: params.currentTaxable,
+            currentPreTax: params.currentPreTax,
+            currentRoth: params.currentRoth,
+            totalCurrentSavings,
+            categorizedAssets
+        });
+        
         // Simple calculation for demonstration
         const futureValue = totalCurrentSavings * Math.pow(1.07, yearsToRetirement) + 
                           (params.monthlyContribution * 12 * ((Math.pow(1.07, yearsToRetirement) - 1) / 0.07));
