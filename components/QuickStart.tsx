@@ -6,7 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
 import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
 import { STORAGE_KEYS } from '@/lib/constants';
-import { categorizeAssets, getDetailedAssetCategorization, getCategoryDisplayName } from '@/lib/assetCategorization';
+import { categorizeAssets, categorizeAsset, getDetailedAssetCategorization, getCategoryDisplayName } from '@/lib/assetCategorization';
 
 interface QuickStartProps {
     params: ModelingParams;
@@ -62,8 +62,9 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             
             // Auto-categorize assets
             const categorized = categorizeAssets(assetsData);
-            console.log('Debug - Assets:', assetsData);
+            console.log('Debug - Raw Assets:', assetsData.map(a => ({ name: a.name, type: a.type_name, subtype: a.subtype_name, balance: a.balance })));
             console.log('Debug - Categorized:', categorized);
+            console.log('Debug - Individual categorization:', assetsData.map(a => ({ name: a.name, category: categorizeAsset(a) })));
             setCategorizedAssets(categorized);
             
             // Auto-populate savings amount with categorized data
