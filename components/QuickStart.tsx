@@ -62,6 +62,8 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             
             // Auto-categorize assets
             const categorized = categorizeAssets(assetsData);
+            console.log('Debug - Assets:', assetsData);
+            console.log('Debug - Categorized:', categorized);
             setCategorizedAssets(categorized);
             
             // Auto-populate savings amount with categorized data
@@ -244,7 +246,10 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     </div>
 
                     {/* Categorized Assets Display */}
-                    {hasLunchMoneyToken && assets.length > 0 && (
+                    {(() => {
+                        console.log('Debug - Display condition:', { hasLunchMoneyToken, assetsLength: assets.length, categorizedAssets });
+                        return hasLunchMoneyToken && assets.length > 0;
+                    })() && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-3">
                                 <Wallet className="w-5 h-5 text-blue-600" />

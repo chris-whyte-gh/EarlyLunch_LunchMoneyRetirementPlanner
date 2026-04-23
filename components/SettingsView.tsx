@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Save, Trash2, CheckCircle, AlertCircle, Key, Search, RefreshCw, Info } from 'lucide-react';
 import { Asset } from '@/lib/lunchmoney';
-import { categorizeAsset } from '@/lib/modeling';
+import { categorizeAsset, getCategoryDisplayName } from '@/lib/assetCategorization';
 import { STORAGE_KEYS } from '@/lib/constants';
 
 export function SettingsView() {
@@ -309,8 +309,9 @@ export function SettingsView() {
                                 {sortedAssets.map(asset => {
                                     const cat = categorizeAsset(asset);
                                     let catColor = "bg-gray-100 text-gray-800";
-                                    if (cat === 'pretax') catColor = "bg-yellow-100 text-yellow-800";
+                                    if (cat === 'preTax') catColor = "bg-yellow-100 text-yellow-800";
                                     if (cat === 'roth') catColor = "bg-emerald-100 text-emerald-800";
+                                    if (cat === 'taxable') catColor = "bg-blue-100 text-blue-800";
 
                                     const isExcluded = excludedIds.includes(asset.id);
 
@@ -339,7 +340,7 @@ export function SettingsView() {
                                             <td className="p-3 text-right font-mono">{formatCurrency(asset.balance)}</td>
                                             <td className="p-3">
                                                 <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", catColor)}>
-                                                    {cat}
+                                                    {getCategoryDisplayName(cat)}
                                                 </span>
                                             </td>
                                         </tr>
