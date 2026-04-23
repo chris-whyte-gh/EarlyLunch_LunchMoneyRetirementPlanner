@@ -193,8 +193,11 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         const yearsToRetirement = params.retirementAge - params.currentAge;
         const yearsInRetirement = 90 - params.retirementAge;
         
+        // Use total portfolio value from all categorized assets
+        const totalCurrentSavings = params.currentTaxable + params.currentPreTax + params.currentRoth;
+        
         // Simple calculation for demonstration
-        const futureValue = params.currentTaxable * Math.pow(1.07, yearsToRetirement) + 
+        const futureValue = totalCurrentSavings * Math.pow(1.07, yearsToRetirement) + 
                           (params.monthlyContribution * 12 * ((Math.pow(1.07, yearsToRetirement) - 1) / 0.07));
         
         const annualWithdrawal = futureValue * 0.04;
@@ -204,6 +207,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             yearsToRetirement,
             futureValue,
             monthlyWithdrawal,
+            currentSavings: totalCurrentSavings,
             canRetire: monthlyWithdrawal > 3000 // Simple threshold
         };
     };
@@ -236,9 +240,9 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
-                                ${Math.round(summary.futureValue).toLocaleString()}
+                                ${Math.round(summary.currentSavings).toLocaleString()}
                             </div>
-                            <div className="text-sm text-muted-foreground">Total savings at retirement</div>
+                            <div className="text-sm text-muted-foreground">Current total savings</div>
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-blue-600 mb-1">
