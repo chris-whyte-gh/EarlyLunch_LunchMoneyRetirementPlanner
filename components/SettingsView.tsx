@@ -40,13 +40,23 @@ export function SettingsView() {
             
             fetchedAssets.forEach((asset: Asset) => {
                 const category = categorizeAsset(asset);
-                // Retirement accounts (pre-tax, roth) are income
-                // Taxable accounts (checking, savings, brokerage) are spending sources
-                if (category === 'taxable') {
+                // Portfolio Assets: Retirement accounts + investment accounts
+                if (category === 'preTax' || category === 'roth' || 
+                    (category === 'taxable' && (asset.type_name.includes('Brokerage') || 
+                                              asset.type_name.includes('Investment') ||
+                                              asset.type_name.includes('Stock') ||
+                                              asset.type_name.includes('ETF')))) {
+                    // Include in portfolio (don't exclude)
+                }
+                // Spending Tracking: Checking, savings, credit cards
+                else if (category === 'taxable' && 
+                        (asset.type_name.includes('Checking') || 
+                         asset.type_name.includes('Savings') ||
+                         asset.type_name.includes('Credit'))) {
                     autoSpendingSourceIds.push(asset.id);
                 }
-                // Other accounts might be things like loans that should be excluded
-                if (category === 'other') {
+                // Exclude: Loans, mortgages, other non-assets
+                else if (category === 'other') {
                     autoExcludedIds.push(asset.id);
                 }
             });
@@ -285,10 +295,10 @@ export function SettingsView() {
                     <div className="text-xs leading-relaxed text-blue-900">
                         <p className="font-bold mb-1 text-[13px]">How this works:</p>
                         <ul className="list-disc list-inside space-y-1">
-                            <li><span className="font-bold">Income (Portfolio):</span> Check your retirement assets (401k, Roth, Brokerage). This counts toward your &quot;Win&quot; number.</li>
-                            <li><span className="font-bold">Spend (Spending):</span> Check your credit cards and checking accounts. This helps us estimate your <em>actual monthly burn</em>.</li>
+                            <li><span className="font-bold">Portfolio:</span> Include retirement accounts (401k, IRA, Roth) and investments. These count toward your retirement net worth and projections.</li>
+                            <li><span className="font-bold">Spending:</span> Track monthly expenses from checking, savings, and credit cards. This helps calculate your actual monthly burn rate.</li>
                         </ul>
-                        <p className="mt-2 text-[10px] italic">Tip: You can exclude a loan (like a Mortgage) from &quot;Income&quot; to keep it out of your net worth, but &quot;Spend&quot; will still track its payments!</p>
+                        <p className="mt-2 text-[10px] italic">Tip: Most accounts are automatically categorized. You can override any selection to match your preferences.</p>
                     </div>
                 </div>
 
@@ -323,8 +333,8 @@ export function SettingsView() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-border">
                                 <tr>
-                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Include in Portfolio Net Worth">Income</th>
-                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Track spending from this account">Spend</th>
+                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Include in Retirement Portfolio">Portfolio</th>
+                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Track Monthly Spending">Spending</th>
                                     <th className="p-3 font-semibold text-muted-foreground w-1/3">Asset Name</th>
                                     <th className="p-3 font-semibold text-muted-foreground">Type / Subtype</th>
                                     <th className="p-3 font-semibold text-muted-foreground text-right">Balance</th>
@@ -349,7 +359,7 @@ export function SettingsView() {
                                                     checked={!isExcluded}
                                                     onChange={() => toggleExclusion(asset.id)}
                                                     className="accent-primary w-4 h-4 cursor-pointer"
-                                                    title="Include in Portfolio Net Worth"
+                                                    title="Count toward retirement portfolio and net worth"
                                                 />
                                             </td>
                                             <td className="p-3 text-center">
@@ -358,7 +368,7 @@ export function SettingsView() {
                                                     checked={spendingSourceIds.includes(asset.id)}
                                                     onChange={() => toggleSpendingSource(asset.id)}
                                                     className="accent-blue-500 w-4 h-4 cursor-pointer"
-                                                    title="Track spending from this account"
+                                                    title="Track monthly expenses from this account"
                                                 />
                                             </td>
                                             <td className="p-3 font-medium text-foreground">{asset.name}</td>
