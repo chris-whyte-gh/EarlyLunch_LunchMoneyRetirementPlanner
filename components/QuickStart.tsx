@@ -40,6 +40,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
             console.log('QuickStart - Token check:', { token: token ? 'exists' : 'none', tokenValue: token });
             if (token && token !== 'your_token_here') {
+                console.log('QuickStart - Setting hasLunchMoneyToken to true');
                 setHasLunchMoneyToken(true);
                 await fetchLunchMoneyData(token);
             }
@@ -249,13 +250,14 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
 
                     {/* Categorized Assets Display */}
                     {(() => {
+                        const shouldShow = assets.length > 0;
                         console.log('QuickStart - Display check:', { 
                             hasLunchMoneyToken, 
                             assetsLength: assets.length, 
                             categorizedAssets,
-                            shouldShow: hasLunchMoneyToken && assets.length > 0 
+                            shouldShow 
                         });
-                        return hasLunchMoneyToken && assets.length > 0;
+                        return shouldShow;
                     })() && (
                         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-3">
