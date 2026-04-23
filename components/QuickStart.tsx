@@ -1,21 +1,21 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { ModelingParams } from '@/lib/modeling';
+import { SimpleRetirementParams, SimpleRetirementResults, calculateSimpleRetirement, getBeginnerRecommendations } from '@/lib/simpleModeling';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
 import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
 import { STORAGE_KEYS } from '@/lib/constants';
-import { categorizeAssets, categorizeAsset, getDetailedAssetCategorization, getCategoryDisplayName } from '@/lib/assetCategorization';
+import { categorizeAssets, getCategoryDisplayName } from '@/lib/assetCategorization';
 
 interface QuickStartProps {
-    params: ModelingParams;
-    onChange: (params: ModelingParams) => void;
+    params: SimpleRetirementParams;
+    onChange: (params: SimpleRetirementParams) => void;
     onAdvancedMode: () => void;
 }
 
 interface QuickStartQuestion {
-    id: keyof ModelingParams;
+    id: keyof SimpleRetirementParams;
     label: string;
     description: string;
     icon: React.ReactNode;
@@ -105,37 +105,39 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         return Math.round(incomeTransactions / 3); // Average per month
     };
 
-    const questions: QuickStartQuestion[] = [
+    const quickStartQuestions: QuickStartQuestion[] = [
         {
             id: 'currentAge',
-            label: "How old are you?",
-            description: "Your current age helps us plan your retirement timeline",
-            icon: <Calendar className="w-6 h-6" />,
-            placeholder: "e.g., 30",
+            label: 'What is your current age?',
+            description: 'This helps us calculate your retirement timeline',
+            icon: <Calendar className="w-5 h-5" />,
+            placeholder: '30',
             step: 1
         },
         {
             id: 'retirementAge',
-            label: "When do you want to retire?",
-            description: "The age you'd like to stop working and live off your savings",
-            icon: <TrendingUp className="w-6 h-6" />,
-            placeholder: "e.g., 65",
+            label: 'When would you like to retire?',
+            description: 'The age you want to stop working and live off your savings',
+            icon: <TrendingUp className="w-5 h-5" />,
+            placeholder: '45',
             step: 1
         },
         {
-            id: 'currentTaxable',
-            label: hasLunchMoneyToken ? "Your current savings" : "How much do you have saved?",
-            description: hasLunchMoneyToken ? `Based on your ${assets.length} connected accounts` : "Total amount you've saved across all accounts",
-            icon: hasLunchMoneyToken ? <Wallet className="w-6 h-6" /> : <DollarSign className="w-6 h-6" />,
-            placeholder: "e.g., 50000",
-            suffix: "$",
+            id: 'totalSavings',
+            label: 'What are your current total savings?',
+            description: 'All your retirement accounts combined (401k, IRA, brokerage, etc.)',
+            icon: <DollarSign className="w-5 h-5" />,
+            placeholder: '100000',
+            suffix: '$',
             step: 1000
         },
         {
-            id: 'monthlyContribution',
-            label: hasLunchMoneyToken ? "Your monthly savings rate" : "How much can you save monthly?",
-            description: hasLunchMoneyToken ? "Based on your recent income patterns" : "Amount you can add to your retirement savings each month",
-            icon: hasLunchMoneyToken ? <CreditCard className="w-6 h-6" /> : <PiggyBank className="w-6 h-6" />,
+            id: 'monthlySavings',
+            label: 'How much do you save monthly?',
+            description: 'Total amount you save each month toward retirement',
+            icon: <PiggyBank className="w-5 h-5" />,
+            placeholder: '2000',
+            suffix: '$',
             placeholder: "e.g., 1000",
             suffix: "$",
             step: 100
