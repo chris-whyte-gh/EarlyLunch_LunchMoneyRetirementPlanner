@@ -373,6 +373,64 @@ export function Dashboard() {
                     <SettingsView />
                 ) : activeTab === 'guide' ? (
                     <BeginnerGuide />
+                ) : activeTab === 'roth' ? (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 max-w-2xl mx-auto">
+                        <div className="p-6 bg-white border border-border rounded-2xl shadow-sm space-y-4">
+                            <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                                <TrendingUp className="w-8 h-8 text-blue-700" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-foreground">Build Roth Ladder</h2>
+                            <p className="text-muted-foreground">
+                                This advanced feature helps you plan Roth conversions to optimize your tax strategy in retirement.
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                For the best experience, start with the QuickStart onboarding to set up your basic retirement plan first.
+                            </p>
+                            <div className="flex gap-4 justify-center">
+                                <button
+                                    onClick={() => setShowQuickStart(true)}
+                                    className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md active:scale-95"
+                                >
+                                    Start QuickStart
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('overview')}
+                                    className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all"
+                                >
+                                    Back to Overview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                ) : activeTab === 'sepp' ? (
+                    <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 max-w-2xl mx-auto">
+                        <div className="p-6 bg-white border border-border rounded-2xl shadow-sm space-y-4">
+                            <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto">
+                                <Zap className="w-8 h-8 text-purple-700" />
+                            </div>
+                            <h2 className="text-2xl font-bold text-foreground">Plan SEPP (72t)</h2>
+                            <p className="text-muted-foreground">
+                                This advanced feature helps you plan Substantially Equal Periodic Payments (SEPP) for early retirement access to funds.
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                                For the best experience, start with the QuickStart onboarding to set up your basic retirement plan first.
+                            </p>
+                            <div className="flex gap-4 justify-center">
+                                <button
+                                    onClick={() => setShowQuickStart(true)}
+                                    className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md active:scale-95"
+                                >
+                                    Start QuickStart
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('overview')}
+                                    className="inline-flex items-center gap-2 border border-border px-6 py-3 rounded-xl font-bold hover:bg-slate-50 transition-all"
+                                >
+                                    Back to Overview
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 ) : loadError && (loadError.code === 'MISSING_TOKEN' || loadError.code === 'INVALID_TOKEN' || loadError.code === 'API_ERROR') ? (
                     <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 max-w-2xl mx-auto">
                         <div className="p-6 bg-white border border-border rounded-2xl shadow-sm space-y-4">
