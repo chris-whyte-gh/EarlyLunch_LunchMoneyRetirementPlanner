@@ -6,7 +6,7 @@ import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
 import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
 import { STORAGE_KEYS } from '@/lib/constants';
-import { categorizeAssets, getCategoryDisplayName } from '@/lib/assetCategorization';
+import { categorizeAssets, categorizeAsset, getCategoryDisplayName } from '@/lib/assetCategorization';
 
 interface QuickStartProps {
     params: SimpleRetirementParams;
@@ -74,10 +74,8 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             
             onChange({
                 ...params,
-                currentTaxable: categorized.taxable,
-                currentPreTax: categorized.preTax,
-                currentRoth: categorized.roth,
-                monthlyContribution: monthlySavings,
+                totalSavings: categorized.taxable + categorized.preTax + categorized.roth,
+                monthlySavings: monthlySavings,
             });
         } catch (error) {
             console.error('Failed to fetch LunchMoney data:', error);
@@ -105,7 +103,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         return Math.round(incomeTransactions / 3); // Average per month
     };
 
-    const quickStartQuestions: QuickStartQuestion[] = [
+    const questions: QuickStartQuestion[] = [
         {
             id: 'currentAge',
             label: 'What is your current age?',
@@ -138,8 +136,6 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             icon: <PiggyBank className="w-5 h-5" />,
             placeholder: '2000',
             suffix: '$',
-            placeholder: "e.g., 1000",
-            suffix: "$",
             step: 100
         }
     ];
@@ -166,60 +162,17 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     };
 
     const handleInputChange = (value: string) => {
-        const cleanValue = value.replace(/[$,]/g, '');
-        const numValue = parseFloat(cleanValue);
-        
-        if (!isNaN(numValue) && numValue >= 0) {
-            const scale = currentQuestion.step === 1 ? 1 : 1;
-            onChange({ 
-                ...params, 
-                [currentQuestion.id]: numValue / scale,
-                // Set reasonable defaults for other fields
-                lifeExpectancy: 90,
-                annualReturn: 0.07,
-                inflationRate: 0.03,
-                safeWithdrawalRate: 0.04,
-                effectiveTaxRate: 0.15,
-                currentPreTax: 0,
-                currentRoth: 0,
-                rothConversionAmount: 0,
-                rothConversionStartAge: 40,
-                rothConversionEndAge: 50,
-                enableSEPP: false,
-                seppStartAge: 40
-            });
-        }
+        const numValue = parseFloat(value) || 0;
+        onChange({
+            ...params,
+            [currentQuestion.id]: numValue,
+            annualReturn: 0.07, // Fixed 7% return
+            withdrawalRate: 0.04, // Fixed 4% withdrawal rate
+        });
     };
 
     const calculateRetirementSummary = () => {
-        const yearsToRetirement = params.retirementAge - params.currentAge;
-        const yearsInRetirement = 90 - params.retirementAge;
-        
-        // Use total portfolio value from all categorized assets
-        const totalCurrentSavings = params.currentTaxable + params.currentPreTax + params.currentRoth;
-        
-        console.log('QuickStart - Portfolio calculation:', {
-            currentTaxable: params.currentTaxable,
-            currentPreTax: params.currentPreTax,
-            currentRoth: params.currentRoth,
-            totalCurrentSavings,
-            categorizedAssets
-        });
-        
-        // Simple calculation for demonstration
-        const futureValue = totalCurrentSavings * Math.pow(1.07, yearsToRetirement) + 
-                          (params.monthlyContribution * 12 * ((Math.pow(1.07, yearsToRetirement) - 1) / 0.07));
-        
-        const annualWithdrawal = futureValue * 0.04;
-        const monthlyWithdrawal = annualWithdrawal / 12;
-
-        return {
-            yearsToRetirement,
-            futureValue,
-            monthlyWithdrawal,
-            currentSavings: totalCurrentSavings,
-            canRetire: monthlyWithdrawal > 3000 // Simple threshold
-        };
+        return calculateSimpleRetirement(params);
     };
 
     const summary = calculateRetirementSummary();
@@ -234,7 +187,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     
                     <div>
                         <h2 className="text-2xl font-bold text-foreground mb-2">
-                            {summary.canRetire ? "Great News!" : "Let's Make a Plan"}
+                            {summary.isOnTrack ? "Great News!" : "Let's Make a Plan"}
                         </h2>
                         <p className="text-muted-foreground">
                             Based on your current savings rate, here's your retirement outlook:
@@ -250,13 +203,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
-                                ${Math.round(summary.currentSavings).toLocaleString()}
+                                ${Math.round(params.totalSavings).toLocaleString()}
                             </div>
                             <div className="text-sm text-muted-foreground">Current total savings</div>
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-blue-600 mb-1">
-                                ${Math.round(summary.monthlyWithdrawal).toLocaleString()}
+                                ${Math.round(summary.monthlyIncomeInRetirement).toLocaleString()}
                             </div>
                             <div className="text-sm text-muted-foreground">Monthly income in retirement</div>
                         </div>
