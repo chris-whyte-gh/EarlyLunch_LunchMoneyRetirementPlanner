@@ -406,7 +406,10 @@ export function Dashboard() {
                             </p>
                             <div className="flex gap-4 justify-center">
                                 <button
-                                    onClick={() => setShowQuickStart(true)}
+                                    onClick={() => {
+                                        setActiveTab('overview');
+                                        setShowQuickStart(true);
+                                    }}
                                     className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md active:scale-95"
                                 >
                                     Start QuickStart
@@ -435,7 +438,10 @@ export function Dashboard() {
                             </p>
                             <div className="flex gap-4 justify-center">
                                 <button
-                                    onClick={() => setShowQuickStart(true)}
+                                    onClick={() => {
+                                        setActiveTab('overview');
+                                        setShowQuickStart(true);
+                                    }}
                                     className="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold hover:bg-primary/90 transition-all shadow-md active:scale-95"
                                 >
                                     Start QuickStart
@@ -572,7 +578,7 @@ export function Dashboard() {
                                                 {params.retirementAge - params.currentAge}
                                             </div>
                                         </div>
-                                    </div>
+                                                                            </div>
                                 </div>
 
                                 {/* Quick Settings */}
