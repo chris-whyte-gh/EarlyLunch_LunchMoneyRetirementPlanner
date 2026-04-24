@@ -162,13 +162,19 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     };
 
     const handleInputChange = (value: string) => {
-        const numValue = parseFloat(value) || 0;
+        // Remove commas and convert to number
+        const cleanValue = value.replace(/,/g, '');
+        const numValue = parseFloat(cleanValue) || 0;
         onChange({
             ...params,
             [currentQuestion.id]: numValue,
             annualReturn: 0.07, // Fixed 7% return
             withdrawalRate: 0.04, // Fixed 4% withdrawal rate
         });
+    };
+
+    const formatInputValue = (value: number): string => {
+        return value.toLocaleString('en-US');
     };
 
     const calculateRetirementSummary = () => {
@@ -357,13 +363,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     <input
                         type="text"
                         inputMode="decimal"
-                        value={(params[currentQuestion.id] as number)?.toString() || ''}
+                        value={formatInputValue(params[currentQuestion.id] as number)}
                         onChange={(e) => handleInputChange(e.target.value)}
                         placeholder={currentQuestion.placeholder}
-                        className="w-full text-2xl font-semibold bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        className="w-full text-2xl font-semibold bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                     />
                     {currentQuestion.suffix && (
-                        <span className="absolute right-6 top-1/2 transform -translate-y-1/2 text-2xl text-muted-foreground">
+                        <span className="absolute right-6 top-1/2 transform -translate-y-1/2 text-2xl text-muted-foreground pointer-events-none">
                             {currentQuestion.suffix}
                         </span>
                     )}
