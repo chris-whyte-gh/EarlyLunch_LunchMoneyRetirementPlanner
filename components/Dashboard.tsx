@@ -113,14 +113,7 @@ export function Dashboard() {
                 const savedParams = JSON.parse(savedParamsStr);
                 setParams(prev => ({
                     ...prev,
-                    // Only restore specific user-configurable fields
-                    retirementAge: savedParams.retirementAge ?? prev.retirementAge,
-                    lifeExpectancy: savedParams.lifeExpectancy ?? prev.lifeExpectancy,
-                    monthlyContribution: savedParams.monthlyContribution ?? prev.monthlyContribution,
-                    annualReturn: savedParams.annualReturn ?? prev.annualReturn,
-                    inflationRate: savedParams.inflationRate ?? prev.inflationRate,
-                    safeWithdrawalRate: savedParams.safeWithdrawalRate ?? prev.safeWithdrawalRate,
-                    effectiveTaxRate: savedParams.effectiveTaxRate ?? prev.effectiveTaxRate,
+                    ...savedParams,
                     rothConversionAmount: savedParams.rothConversionAmount ?? prev.rothConversionAmount,
                     rothConversionStartAge: savedParams.rothConversionStartAge ?? prev.rothConversionStartAge,
                     rothConversionEndAge: savedParams.rothConversionEndAge ?? prev.rothConversionEndAge,
@@ -137,6 +130,17 @@ export function Dashboard() {
             }
         }
         setIsParamsLoaded(true);
+    }, []);
+
+    // Listen for showQuickStart event from Settings
+    useEffect(() => {
+        const handleShowQuickStart = () => {
+            setActiveTab('overview');
+            setShowQuickStart(true);
+        };
+
+        window.addEventListener('showQuickStart', handleShowQuickStart);
+        return () => window.removeEventListener('showQuickStart', handleShowQuickStart);
     }, []);
 
     // Save scenario params on change
@@ -168,6 +172,12 @@ export function Dashboard() {
     // Calculate Derived Params when Data Loads
     useEffect(() => {
         async function loadData() {
+            setLoading(true);
+            const timeoutId = setTimeout(() => {
+                setLoading(false);
+                setLoadError({ message: 'Loading is taking longer than expected. Please refresh the page.' });
+            }, 10000); // 10 second timeout
+            
             try {
                 // Check for token in localStorage
                 const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -290,6 +300,7 @@ export function Dashboard() {
             } catch (e) {
                 console.error("Could not load Lunch Money data", e);
             } finally {
+                clearTimeout(timeoutId);
                 setLoading(false);
             }
         }

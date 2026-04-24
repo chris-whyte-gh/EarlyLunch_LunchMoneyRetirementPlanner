@@ -203,13 +203,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-green-600 mb-1">
-                                ${Math.round(params.totalSavings).toLocaleString()}
+                                ${params.totalSavings.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                             <div className="text-sm text-muted-foreground">Current total savings</div>
                         </div>
                         <div className="text-center">
                             <div className="text-3xl font-bold text-blue-600 mb-1">
-                                ${Math.round(summary.monthlyIncomeInRetirement).toLocaleString()}
+                                ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                             <div className="text-sm text-muted-foreground">Monthly income in retirement</div>
                         </div>
@@ -217,11 +217,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
 
                     {/* Categorized Assets Display */}
                     {(() => {
-                        const shouldShow = assets.length > 0;
+                        const totalCategorized = categorizedAssets.taxable + categorizedAssets.preTax + categorizedAssets.roth;
+                        const shouldShow = hasLunchMoneyToken && totalCategorized > 0;
                         console.log('QuickStart - Display check:', { 
                             hasLunchMoneyToken, 
                             assetsLength: assets.length, 
                             categorizedAssets,
+                            totalCategorized,
                             shouldShow 
                         });
                         return shouldShow;

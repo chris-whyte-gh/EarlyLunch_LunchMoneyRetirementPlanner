@@ -15,6 +15,7 @@ export function SettingsView() {
     const [excludedIds, setExcludedIds] = useState<number[]>([]);
     const [spendingSourceIds, setSpendingSourceIds] = useState<number[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
+    const [previousToken, setPreviousToken] = useState('');
 
     // Debug Data State
     const [assets, setAssets] = useState<Asset[]>([]);
@@ -111,6 +112,8 @@ export function SettingsView() {
     }, []);
 
     const handleSave = () => {
+        const isNewToken = token.trim() && !previousToken.trim();
+        
         if (token.trim()) {
             localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, token.trim());
         }
@@ -125,12 +128,17 @@ export function SettingsView() {
         localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(excludedIds));
         localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(spendingSourceIds));
 
+        setPreviousToken(token.trim());
         setStatus('saved');
         setTimeout(() => setStatus('idle'), 3000);
 
-        if (token.trim()) {
-            // Optionally auto-fetch debug data on save
-            fetchDebugData(token.trim());
+        // Auto-redirect to QuickStart if this is a new token
+        if (isNewToken) {
+            setTimeout(() => {
+                // Trigger QuickStart by setting active tab to 'overview' and showQuickStart to true
+                const event = new CustomEvent('showQuickStart');
+                window.dispatchEvent(event);
+            }, 1000);
         }
     };
 
