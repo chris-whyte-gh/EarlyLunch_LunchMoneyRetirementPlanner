@@ -6,11 +6,14 @@ import { calculateBuckets, calculateProjection, calculateMonthlyExpenses, Projec
 import { SimpleRetirementParams, calculateSimpleRetirement } from '@/lib/simpleModeling';
 
 // Bridge function to convert complex ModelingParams to SimpleRetirementParams
-function convertToSimpleParams(complexParams: ModelingParams): SimpleRetirementParams {
+function convertToSimpleParams(complexParams: ModelingParams, assets: Asset[] = []): SimpleRetirementParams {
+    // Calculate actual total savings from LunchMoney assets
+    const actualTotalSavings = assets.reduce((total, asset) => total + (parseFloat(asset.balance?.toString() || '0')), 0);
+    
     return {
         currentAge: complexParams.currentAge,
         retirementAge: complexParams.retirementAge,
-        totalSavings: complexParams.currentTaxable + complexParams.currentPreTax + complexParams.currentRoth,
+        totalSavings: actualTotalSavings > 0 ? actualTotalSavings : (complexParams.currentTaxable + complexParams.currentPreTax + complexParams.currentRoth),
         monthlySavings: complexParams.monthlyContribution,
         annualReturn: 0.07, // Fixed 7% return for simplicity
         withdrawalRate: 0.04, // Fixed 4% withdrawal rate
@@ -99,6 +102,7 @@ export function Dashboard() {
     const [useActualSpend, setUseActualSpend] = useState(false);
     const [estimatedMonthlySpend, setEstimatedMonthlySpend] = useState(0);
     const [showQuickStart, setShowQuickStart] = useState(true);
+    const [assets, setAssets] = useState<Asset[]>([]);
     const [dashboardMode, setDashboardMode] = useState<'simple' | 'details' | 'advanced'>('simple');
 
     // Load saved scenario params on mount
@@ -211,6 +215,9 @@ export function Dashboard() {
                 // Filter & Categorize Assets
                 const filteredAssets = (data.assets as Asset[]).filter(a => !excludedIds.includes(a.id));
                 const buckets = calculateBuckets(filteredAssets);
+                
+                // Store assets in state for QuickStart
+                setAssets(filteredAssets);
 
                 // Calculate Age if Birth Year exists
                 let calculatedAge = undefined;
@@ -461,7 +468,7 @@ export function Dashboard() {
                     </div>
                 ) : showQuickStart ? (
                     <QuickStart 
-                        params={convertToSimpleParams(params)} 
+                        params={convertToSimpleParams(params, assets)} 
                         onChange={(simpleParams) => {
                             // Convert simple params back to complex params to maintain compatibility
                             const updatedComplexParams: ModelingParams = {
