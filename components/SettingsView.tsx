@@ -18,6 +18,7 @@ export function SettingsView() {
     const [previousToken, setPreviousToken] = useState('');
     const [categoryOverrides, setCategoryOverrides] = useState<Record<number, string>>({});
     const [refreshKey, setRefreshKey] = useState(0);
+    const [isFirstLoad, setIsFirstLoad] = useState(true);
 
     // Debug Data State
     const [assets, setAssets] = useState<Asset[]>([]);
@@ -64,13 +65,21 @@ export function SettingsView() {
                 }
             });
             
-            // Only update if user hasn't manually set preferences
-            if (excludedIds.length === 0) {
+            // Only update if user hasn't manually set preferences AND this is the first load
+            const hasStoredExcluded = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
+            const hasStoredSpending = localStorage.getItem(STORAGE_KEYS.SPENDING_SOURCES);
+            
+            if (isFirstLoad && !hasStoredExcluded && excludedIds.length === 0) {
                 setExcludedIds(autoExcludedIds);
+                localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(autoExcludedIds));
             }
-            if (spendingSourceIds.length === 0) {
+            if (isFirstLoad && !hasStoredSpending && spendingSourceIds.length === 0) {
                 setSpendingSourceIds(autoSpendingSourceIds);
+                localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(autoSpendingSourceIds));
             }
+            
+            // Mark first load as complete
+            setIsFirstLoad(false);
         } catch (e: any) {
             setDebugError(e.message);
             setAssets([]);
