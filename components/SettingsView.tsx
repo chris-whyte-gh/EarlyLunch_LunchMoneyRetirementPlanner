@@ -152,21 +152,25 @@ export function SettingsView() {
 
     const toggleExclusion = (id: number) => {
         setExcludedIds(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(x => x !== id);
-            } else {
-                return [...prev, id];
-            }
+            const newIds = prev.includes(id) 
+                ? prev.filter(x => x !== id)
+                : [...prev, id];
+            
+            // Save immediately to localStorage
+            localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(newIds));
+            return newIds;
         });
     };
 
     const toggleSpendingSource = (id: number) => {
         setSpendingSourceIds(prev => {
-            if (prev.includes(id)) {
-                return prev.filter(x => x !== id);
-            } else {
-                return [...prev, id];
-            }
+            const newIds = prev.includes(id)
+                ? prev.filter(x => x !== id)
+                : [...prev, id];
+            
+            // Save immediately to localStorage
+            localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(newIds));
+            return newIds;
         });
     };
 

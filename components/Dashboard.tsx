@@ -169,6 +169,103 @@ export function Dashboard() {
         localStorage.setItem(STORAGE_KEYS.SCENARIO_PARAMS, JSON.stringify(paramsToSave));
     }, [params, isParamsLoaded]);
 
+    // Process LunchMoney data (used for both fresh and cached data)
+    const processLunchMoneyData = (data: any, token: string, birthYearStr: string | null, birthMonthStr: string | null) => {
+        // Unpack excluded IDs and spending sources
+        let excludedIds: number[] = [];
+        let spendingIds: number[] = [];
+        const excludedStr = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
+        const spendingStr = localStorage.getItem(STORAGE_KEYS.SPENDING_SOURCES);
+
+        if (excludedStr) {
+            try { excludedIds = JSON.parse(excludedStr); } catch (e) { console.error("Error parsing excluded ids", e); }
+        }
+        if (spendingStr) {
+            try {
+                spendingIds = JSON.parse(spendingStr);
+                setSpendingSourceIds(spendingIds);
+            } catch (e) {
+                console.error("Error parsing spending ids", e);
+            }
+        }
+
+        // Filter & Categorize Assets
+        const filteredAssets = (data.assets as Asset[]).filter(a => !excludedIds.includes(a.id));
+        const buckets = calculateBuckets(filteredAssets);
+        
+        // Store assets in state for QuickStart
+        setAssets(filteredAssets);
+
+        // Calculate Age if Birth Year exists
+        let calculatedAge = undefined;
+        if (birthYearStr) {
+            const year = parseInt(birthYearStr);
+            if (!isNaN(year)) {
+                setBirthYear(year);
+
+                const now = new Date();
+                const currentYear = now.getFullYear();
+                const currentMonth = now.getMonth() + 1; // 1-12
+
+                let age = currentYear - year;
+
+                // Adjust for birth month if available
+                if (birthMonthStr) {
+                    const month = parseInt(birthMonthStr);
+                    if (!isNaN(month)) {
+                        if (currentMonth < month) {
+                            age--;
+                        }
+                    }
+                }
+
+                calculatedAge = age;
+            } else {
+                setBirthYear(undefined);
+            }
+        } else {
+            setBirthYear(undefined);
+        }
+
+        // Calculate annual spend from budgets
+        let calculatedAnnualSpend = undefined;
+        if (data.budgets && (data.budgets as Budget[]).length > 0) {
+            const budgetTotal = (data.budgets as Budget[])
+                .filter(b => !b.is_income && !b.exclude_from_budget)
+                .reduce((sum, b) => sum + parseFloat(b.amount), 0);
+            if (budgetTotal > 0) {
+                calculatedAnnualSpend = budgetTotal * 12;
+            }
+        }
+
+        setParams(prev => {
+            // We only want to override expectedAnnualSpend if it's the first time or demo
+            const shouldOverrideSpend = !localStorage.getItem(STORAGE_KEYS.SCENARIO_PARAMS) || token === 'demo';
+
+            return {
+                ...prev,
+                currentAge: calculatedAge ?? prev.currentAge,
+                currentPreTax: buckets.pretax,
+                currentRoth: buckets.roth,
+                currentTaxable: buckets.taxable,
+                expectedAnnualSpend: (shouldOverrideSpend && calculatedAnnualSpend) ? calculatedAnnualSpend : prev.expectedAnnualSpend,
+            };
+        });
+
+        // Calculate spending from transactions
+        if (data.transactions && spendingIds.length > 0) {
+            const spendingTransactions = (data.transactions as Transaction[]).filter(t =>
+                (t.asset_id && spendingIds.includes(t.asset_id)) ||
+                (t.plaid_account_id && spendingIds.includes(t.plaid_account_id))
+            );
+
+            if (spendingTransactions.length > 0) {
+                const monthlyMean = calculateMonthlyExpenses(spendingTransactions);
+                setEstimatedMonthlySpend(monthlyMean);
+            }
+        }
+    };
+
     // Calculate Derived Params when Data Loads
     useEffect(() => {
         async function loadData() {
@@ -179,10 +276,28 @@ export function Dashboard() {
             }, 10000); // 10 second timeout
             
             try {
-                // Check for token in localStorage
+                // Check for token in localStorage first
                 const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
                 const birthYearStr = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
                 const birthMonthStr = localStorage.getItem(STORAGE_KEYS.BIRTH_MONTH);
+                
+                // Check for cached data
+                const cachedData = localStorage.getItem('lunchmoneyCache');
+                const cacheTimestamp = localStorage.getItem('lunchmoneyCacheTimestamp');
+                const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+                
+                if (cachedData && cacheTimestamp) {
+                    const cacheAge = Date.now() - parseInt(cacheTimestamp);
+                    if (cacheAge < CACHE_DURATION) {
+                        console.log('Using cached LunchMoney data');
+                        const data = JSON.parse(cachedData);
+                        // Process cached data
+                        processLunchMoneyData(data, token || '', birthYearStr, birthMonthStr);
+                        setLoading(false);
+                        clearTimeout(timeoutId);
+                        return;
+                    }
+                }
 
                 const headers: HeadersInit = {};
                 if (token) {
@@ -203,6 +318,11 @@ export function Dashboard() {
                 }
                 const data = await res.json();
                 setLoadError(null);
+
+                // Cache the data for 5 minutes
+                localStorage.setItem('lunchmoneyCache', JSON.stringify(data));
+                localStorage.setItem('lunchmoneyCacheTimestamp', Date.now().toString());
+                console.log('Cached LunchMoney data');
 
                 // Unpack excluded IDs and spending sources
                 let excludedIds: number[] = [];
