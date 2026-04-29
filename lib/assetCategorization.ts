@@ -4,11 +4,12 @@ export interface CategorizedAssets {
     taxable: number;
     preTax: number;
     roth: number;
+    savings: number;
     other: number;
 }
 
 export interface AssetCategory {
-    accountType: 'taxable' | 'preTax' | 'roth' | 'other';
+    accountType: 'taxable' | 'preTax' | 'roth' | 'savings' | 'other';
     balance: number;
     assets: Asset[];
 }
@@ -80,16 +81,36 @@ const ASSET_CATEGORIZATION_MAP = {
         ]
     },
     
+    // Savings accounts (non-brokerage, lower growth rate)
+    savings: {
+        types: [
+            'Savings',
+            'High-Yield Savings',
+            'Money Market',
+            'CD'
+        ],
+        subtypes: [
+            'savings',
+            'high-yield savings',
+            'money market',
+            'cd',
+            'hySA'
+        ],
+        namePatterns: [
+            /savings/i,
+            /high.*yield.*savings/i,
+            /money.*market/i,
+            /certificate.*deposit/i
+        ]
+    },
+    
     // Taxable brokerage and cash accounts
     taxable: {
         types: [
             'Checking',
-            'Savings',
             'Brokerage',
             'Investment',
             'Cash',
-            'Money Market',
-            'CD',
             'Treasury',
             'Stock',
             'ETF',
@@ -97,23 +118,17 @@ const ASSET_CATEGORIZATION_MAP = {
         ],
         subtypes: [
             'checking',
-            'savings',
             'brokerage',
             'investment',
             'cash',
-            'money market',
-            'cd',
             'treasury',
             'taxable'
         ],
         namePatterns: [
             /checking/i,
-            /savings/i,
             /brokerage/i,
             /investment/i,
             /cash/i,
-            /money.*market/i,
-            /cd/i,
             /treasury/i
         ]
     }
@@ -122,7 +137,7 @@ const ASSET_CATEGORIZATION_MAP = {
 /**
  * Categorize a single asset based on LunchMoney type and subtype
  */
-export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | 'other' {
+export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | 'savings' | 'other' {
     // Check for manual override first
     if (typeof window !== 'undefined') {
         const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
@@ -164,6 +179,16 @@ export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | '
         return 'roth';
     }
 
+    // Check savings accounts
+    const savingsConfig = ASSET_CATEGORIZATION_MAP.savings;
+    if (
+        (type_name && savingsConfig.types.includes(type_name)) ||
+        (subtype_name && savingsConfig.subtypes.includes(subtype_name)) ||
+        savingsConfig.namePatterns.some(pattern => pattern.test(name))
+    ) {
+        return 'savings';
+    }
+
     // Check pre-tax accounts first (most specific)
     const preTaxConfig = ASSET_CATEGORIZATION_MAP.preTax;
     if (
@@ -196,6 +221,7 @@ export function categorizeAssets(assets: Asset[]): CategorizedAssets {
         taxable: 0,
         preTax: 0,
         roth: 0,
+        savings: 0,
         other: 0
     };
     
@@ -216,6 +242,7 @@ export function getDetailedAssetCategorization(assets: Asset[]): AssetCategory[]
         { accountType: 'taxable', balance: 0, assets: [] },
         { accountType: 'preTax', balance: 0, assets: [] },
         { accountType: 'roth', balance: 0, assets: [] },
+        { accountType: 'savings', balance: 0, assets: [] },
         { accountType: 'other', balance: 0, assets: [] }
     ];
     

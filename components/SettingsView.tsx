@@ -341,12 +341,11 @@ export function SettingsView() {
                         <table className="w-full text-left">
                             <thead className="bg-slate-50 border-b border-border">
                                 <tr>
-                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Include in Retirement Portfolio">Portfolio</th>
-                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Track Monthly Spending">Spending</th>
+                                    <th className="p-3 font-semibold text-muted-foreground w-12 text-center" title="Include in Portfolio">Include</th>
                                     <th className="p-3 font-semibold text-muted-foreground w-1/3">Asset Name</th>
                                     <th className="p-3 font-semibold text-muted-foreground">Type / Subtype</th>
                                     <th className="p-3 font-semibold text-muted-foreground text-right">Balance</th>
-                                    <th className="p-3 font-semibold text-muted-foreground">Detected Category</th>
+                                    <th className="p-3 font-semibold text-muted-foreground">Category</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border">
@@ -356,6 +355,7 @@ export function SettingsView() {
                                     if (cat === 'preTax') catColor = "bg-yellow-100 text-yellow-800";
                                     if (cat === 'roth') catColor = "bg-emerald-100 text-emerald-800";
                                     if (cat === 'taxable') catColor = "bg-blue-100 text-blue-800";
+                                    if (cat === 'savings') catColor = "bg-green-100 text-green-800";
 
                                     const isExcluded = excludedIds.includes(asset.id);
 
@@ -367,16 +367,7 @@ export function SettingsView() {
                                                     checked={!isExcluded}
                                                     onChange={() => toggleExclusion(asset.id)}
                                                     className="accent-primary w-4 h-4 cursor-pointer"
-                                                    title="Count toward retirement portfolio and net worth"
-                                                />
-                                            </td>
-                                            <td className="p-3 text-center">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={spendingSourceIds.includes(asset.id)}
-                                                    onChange={() => toggleSpendingSource(asset.id)}
-                                                    className="accent-blue-500 w-4 h-4 cursor-pointer"
-                                                    title="Track monthly expenses from this account"
+                                                    title="Include in retirement portfolio"
                                                 />
                                             </td>
                                             <td className="p-3 font-medium text-foreground">{asset.name}</td>
@@ -388,7 +379,7 @@ export function SettingsView() {
                                                     onChange={(e) => {
                                                         // Store manual category override in localStorage
                                                         const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
-                                                        overrides[asset.id] = e.target.value as 'taxable' | 'preTax' | 'roth' | 'other';
+                                                        overrides[asset.id] = e.target.value as 'taxable' | 'preTax' | 'roth' | 'savings' | 'other';
                                                         localStorage.setItem('assetCategoryOverrides', JSON.stringify(overrides));
                                                         // Refresh the display
                                                         window.location.reload();
@@ -398,6 +389,7 @@ export function SettingsView() {
                                                     <option value="taxable">Taxable</option>
                                                     <option value="preTax">Pre-Tax</option>
                                                     <option value="roth">Roth</option>
+                                                    <option value="savings">Savings</option>
                                                     <option value="other">Other</option>
                                                 </select>
                                             </td>

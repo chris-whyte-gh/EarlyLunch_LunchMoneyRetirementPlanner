@@ -239,7 +239,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 <Wallet className="w-5 h-5 text-blue-600" />
                                 <h3 className="font-semibold text-blue-900">Your Accounts (Auto-Categorized)</h3>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Taxable</div>
                                     <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable)}</div>
@@ -251,6 +251,10 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Roth</div>
                                     <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth)}</div>
+                                </div>
+                                <div className="bg-white rounded-lg p-3 border border-blue-100">
+                                    <div className="font-medium text-gray-900">Savings</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.savings)}</div>
                                 </div>
                             </div>
                             <p className="text-xs text-blue-700 mt-3">
