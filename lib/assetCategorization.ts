@@ -27,6 +27,7 @@ const ASSET_CATEGORIZATION_MAP = {
             '403b',
             'Traditional IRA',
             'IRA',
+            'Rollover IRA',
             'SEP IRA',
             'Simple IRA',
             'Pension',
@@ -47,6 +48,7 @@ const ASSET_CATEGORIZATION_MAP = {
             /401k?/i,
             /403b?/i,
             /traditional.*ira/i,
+            /rollover.*ira/i,
             /sep.*ira/i,
             /simple.*ira/i,
             /pension/i,
@@ -121,8 +123,47 @@ const ASSET_CATEGORIZATION_MAP = {
  * Categorize a single asset based on LunchMoney type and subtype
  */
 export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | 'other' {
-    const { type_name, subtype_name, name } = asset;
+    // Check for manual override first
+    if (typeof window !== 'undefined') {
+        const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
+        if (overrides[asset.id]) {
+            console.log('Using manual override for asset:', asset.name, '->', overrides[asset.id]);
+            return overrides[asset.id];
+        }
+    }
     
+    const name = asset.name?.toLowerCase() || '';
+    const type_name = asset.type_name?.toLowerCase() || '';
+    const subtype_name = asset.subtype_name?.toLowerCase() || '';
+    
+    // Debug logging
+    console.log('Categorizing asset:', {
+        name: asset.name,
+        type_name: asset.type_name,
+        subtype_name: asset.subtype_name,
+        balance: asset.balance
+    });
+    
+    // Check Roth first (more specific)
+    const rothConfig = ASSET_CATEGORIZATION_MAP.roth;
+    const rothMatch = (
+        (type_name && rothConfig.types.includes(type_name)) ||
+        (subtype_name && rothConfig.subtypes.includes(subtype_name)) ||
+        rothConfig.namePatterns.some(pattern => pattern.test(name))
+    );
+    
+    console.log('Roth match check:', {
+        typeMatch: type_name && rothConfig.types.includes(type_name),
+        subtypeMatch: subtype_name && rothConfig.subtypes.includes(subtype_name),
+        nameMatch: rothConfig.namePatterns.some(pattern => pattern.test(name)),
+        rothMatch
+    });
+    
+    if (rothMatch) {
+        console.log('Categorized as Roth');
+        return 'roth';
+    }
+
     // Check pre-tax accounts first (most specific)
     const preTaxConfig = ASSET_CATEGORIZATION_MAP.preTax;
     if (
@@ -131,16 +172,6 @@ export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | '
         preTaxConfig.namePatterns.some(pattern => pattern.test(name))
     ) {
         return 'preTax';
-    }
-    
-    // Check Roth accounts
-    const rothConfig = ASSET_CATEGORIZATION_MAP.roth;
-    if (
-        rothConfig.types.includes(type_name) ||
-        (subtype_name && rothConfig.subtypes.includes(subtype_name)) ||
-        rothConfig.namePatterns.some(pattern => pattern.test(name))
-    ) {
-        return 'roth';
     }
     
     // Check taxable accounts

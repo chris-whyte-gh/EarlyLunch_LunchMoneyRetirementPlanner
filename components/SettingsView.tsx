@@ -383,9 +383,23 @@ export function SettingsView() {
                                             <td className="p-3 text-muted-foreground">{asset.type_name} {asset.subtype_name && `/ ${asset.subtype_name}`}</td>
                                             <td className="p-3 text-right font-mono">{formatCurrency(asset.balance)}</td>
                                             <td className="p-3">
-                                                <span className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide", catColor)}>
-                                                    {getCategoryDisplayName(cat)}
-                                                </span>
+                                                <select
+                                                    value={cat}
+                                                    onChange={(e) => {
+                                                        // Store manual category override in localStorage
+                                                        const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
+                                                        overrides[asset.id] = e.target.value as 'taxable' | 'preTax' | 'roth' | 'other';
+                                                        localStorage.setItem('assetCategoryOverrides', JSON.stringify(overrides));
+                                                        // Refresh the display
+                                                        window.location.reload();
+                                                    }}
+                                                    className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border-0 cursor-pointer", catColor)}
+                                                >
+                                                    <option value="taxable">Taxable</option>
+                                                    <option value="preTax">Pre-Tax</option>
+                                                    <option value="roth">Roth</option>
+                                                    <option value="other">Other</option>
+                                                </select>
                                             </td>
                                         </tr>
                                     );
