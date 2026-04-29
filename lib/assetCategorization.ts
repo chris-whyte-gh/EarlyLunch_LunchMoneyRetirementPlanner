@@ -86,12 +86,14 @@ const ASSET_CATEGORIZATION_MAP = {
         types: [
             'Savings',
             'High-Yield Savings',
+            'Checking',
             'Money Market',
             'CD'
         ],
         subtypes: [
             'savings',
             'high-yield savings',
+            'checking',
             'money market',
             'cd',
             'hySA'
@@ -99,6 +101,7 @@ const ASSET_CATEGORIZATION_MAP = {
         namePatterns: [
             /savings/i,
             /high.*yield.*savings/i,
+            /checking/i,
             /money.*market/i,
             /certificate.*deposit/i
         ]
@@ -107,7 +110,6 @@ const ASSET_CATEGORIZATION_MAP = {
     // Taxable brokerage and cash accounts
     taxable: {
         types: [
-            'Checking',
             'Brokerage',
             'Investment',
             'Cash',
@@ -117,7 +119,6 @@ const ASSET_CATEGORIZATION_MAP = {
             'Mutual Fund'
         ],
         subtypes: [
-            'checking',
             'brokerage',
             'investment',
             'cash',
@@ -125,7 +126,6 @@ const ASSET_CATEGORIZATION_MAP = {
             'taxable'
         ],
         namePatterns: [
-            /checking/i,
             /brokerage/i,
             /investment/i,
             /cash/i,

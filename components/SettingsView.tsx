@@ -16,6 +16,8 @@ export function SettingsView() {
     const [spendingSourceIds, setSpendingSourceIds] = useState<number[]>([]);
     const [isLoaded, setIsLoaded] = useState(false);
     const [previousToken, setPreviousToken] = useState('');
+    const [categoryOverrides, setCategoryOverrides] = useState<Record<number, string>>({});
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Debug Data State
     const [assets, setAssets] = useState<Asset[]>([]);
@@ -83,6 +85,12 @@ export function SettingsView() {
             setToken(storedToken);
             // Auto-fetch data if token exists
             fetchDebugData(storedToken);
+        }
+
+        // Load category overrides
+        const overrides = localStorage.getItem('assetCategoryOverrides');
+        if (overrides) {
+            setCategoryOverrides(JSON.parse(overrides));
         }
 
         const storedBirthYear = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
@@ -350,7 +358,7 @@ export function SettingsView() {
                             </thead>
                             <tbody className="divide-y divide-border">
                                 {sortedAssets.map(asset => {
-                                    const cat = categorizeAsset(asset);
+                                    const cat = categoryOverrides[asset.id] || categorizeAsset(asset);
                                     let catColor = "bg-gray-100 text-gray-800";
                                     if (cat === 'preTax') catColor = "bg-yellow-100 text-yellow-800";
                                     if (cat === 'roth') catColor = "bg-emerald-100 text-emerald-800";
@@ -377,12 +385,14 @@ export function SettingsView() {
                                                 <select
                                                     value={cat}
                                                     onChange={(e) => {
-                                                        // Store manual category override in localStorage
+                                                        // Store manual category override in localStorage and state
+                                                        const newCategory = e.target.value as 'taxable' | 'preTax' | 'roth' | 'savings' | 'other';
                                                         const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
-                                                        overrides[asset.id] = e.target.value as 'taxable' | 'preTax' | 'roth' | 'savings' | 'other';
+                                                        overrides[asset.id] = newCategory;
                                                         localStorage.setItem('assetCategoryOverrides', JSON.stringify(overrides));
-                                                        // Refresh the display
-                                                        window.location.reload();
+                                                        setCategoryOverrides(overrides);
+                                                        // Trigger re-render
+                                                        setRefreshKey(prev => prev + 1);
                                                     }}
                                                     className={cn("px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border-0 cursor-pointer", catColor)}
                                                 >
