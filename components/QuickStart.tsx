@@ -234,7 +234,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         });
                         return shouldShow;
                     })() && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
                             <div className="flex items-center gap-2 mb-3">
                                 <Wallet className="w-5 h-5 text-blue-600" />
                                 <h3 className="font-semibold text-blue-900">Your Accounts (Auto-Categorized)</h3>
@@ -259,7 +259,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </div>
                     )}
 
-                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4">
+                    <div className="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4">
                         <div className="flex items-start gap-3">
                             <Info className="w-5 h-5 text-amber-600 mt-0.5 flex-shrink-0" />
                             <div className="text-sm text-amber-800">
@@ -270,7 +270,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </div>
                     </div>
 
-                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
                         <button
                             onClick={handlePrevious}
                             className="px-6 py-3 border border-input rounded-lg hover:bg-slate-50 transition-colors"
