@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
 import { SimpleRetirementParams, SimpleRetirementResults, calculateSimpleRetirement, calculateRequiredMonthlySavings, getBeginnerRecommendations } from '@/lib/simpleModeling';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
@@ -48,33 +49,17 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         }
     }, []);
 
-    // Prevent browser back button from leaving the app
-    useEffect(() => {
-        const handlePopState = (event: PopStateEvent) => {
-            event.preventDefault();
-            event.stopImmediatePropagation();
-            
-            // Handle back navigation within the QuickStart flow
-            if (showResults) {
-                setShowResults(false);
-            } else if (currentStep > 0) {
-                setCurrentStep(currentStep - 1);
-            }
-            // Don't navigate away from the app
-            window.history.pushState(null, '', window.location.pathname);
-        };
+    // Next.js router-based back button handling
+    const router = useRouter();
+    const pathname = usePathname();
 
-        // Add initial history entry
-        window.history.pushState(null, '', window.location.pathname);
-        
-        // Add popstate listener
-        window.addEventListener('popstate', handlePopState);
-        
-        // Cleanup
-        return () => {
-            window.removeEventListener('popstate', handlePopState);
-        };
-    }, [showResults, currentStep]);
+    const handleBack = () => {
+        if (showResults) {
+            setShowResults(false);
+        } else if (currentStep > 0) {
+            setCurrentStep(currentStep - 1);
+        }
+    };
 
     // Check for LunchMoney token and fetch data on mount
     useEffect(() => {
