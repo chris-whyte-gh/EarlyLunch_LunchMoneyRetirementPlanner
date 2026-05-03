@@ -185,7 +185,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
 
     if (showResults) {
         return (
-            <div className="bg-white border border-border rounded-xl p-8 shadow-sm max-w-2xl mx-auto">
+            <div className="bg-white border border-border rounded-xl p-8 shadow-sm max-w-4xl mx-auto">
                 <div className="text-center space-y-6">
                     <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
                         <TrendingUp className="w-8 h-8 text-green-600" />
@@ -239,22 +239,22 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 <Wallet className="w-5 h-5 text-blue-600" />
                                 <h3 className="font-semibold text-blue-900">Your Accounts (Auto-Categorized)</h3>
                             </div>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
-                                <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                    <div className="font-medium text-gray-900">Taxable</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable, { maxDecimals: 2 })}</div>
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                                <div className="bg-white rounded-lg p-4 border border-blue-100 min-w-0">
+                                    <div className="font-medium text-gray-900 mb-1">Taxable</div>
+                                    <div className="text-blue-600 font-bold text-lg leading-tight">{formatCurrency(categorizedAssets.taxable, { maxDecimals: 2 })}</div>
                                 </div>
-                                <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                    <div className="font-medium text-gray-900">Pre-Tax</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.preTax, { maxDecimals: 2 })}</div>
+                                <div className="bg-white rounded-lg p-4 border border-blue-100 min-w-0">
+                                    <div className="font-medium text-gray-900 mb-1">Pre-Tax</div>
+                                    <div className="text-blue-600 font-bold text-lg leading-tight">{formatCurrency(categorizedAssets.preTax, { maxDecimals: 2 })}</div>
                                 </div>
-                                <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                    <div className="font-medium text-gray-900">Roth</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth, { maxDecimals: 2 })}</div>
+                                <div className="bg-white rounded-lg p-4 border border-blue-100 min-w-0">
+                                    <div className="font-medium text-gray-900 mb-1">Roth</div>
+                                    <div className="text-blue-600 font-bold text-lg leading-tight">{formatCurrency(categorizedAssets.roth, { maxDecimals: 2 })}</div>
                                 </div>
-                                <div className="bg-white rounded-lg p-3 border border-blue-100">
-                                    <div className="font-medium text-gray-900">Savings</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.savings, { maxDecimals: 2 })}</div>
+                                <div className="bg-white rounded-lg p-4 border border-blue-100 min-w-0">
+                                    <div className="font-medium text-gray-900 mb-1">Savings</div>
+                                    <div className="text-blue-600 font-bold text-lg leading-tight">{formatCurrency(categorizedAssets.savings, { maxDecimals: 2 })}</div>
                                 </div>
                             </div>
                             <p className="text-xs text-blue-700 mt-3">
