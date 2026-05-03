@@ -206,7 +206,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     const handleInputChange = (value: string) => {
         // Remove commas and convert to number
         const cleanValue = value.replace(/,/g, '');
-        const numValue = parseFloat(cleanValue) || 0;
+        let numValue = parseFloat(cleanValue) || 0;
+        
+        // Round monthly values to whole dollars
+        if (currentQuestion.id === 'monthlySavings') {
+            numValue = Math.round(numValue);
+        }
+        
         onChange({
             ...params,
             [currentQuestion.id]: numValue,
@@ -548,8 +554,10 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             </span>
                         )}
                         <input
-                            type="text"
+                            type="number"
                             inputMode="numeric"
+                            step={currentQuestion.id === 'monthlySavings' ? 1 : currentQuestion.step || 1}
+                            min="0"
                             value={formatInputValue(params[currentQuestion.id] as number, currentQuestion.id)}
                             onChange={(e) => handleInputChange(e.target.value)}
                             placeholder={currentQuestion.placeholder}
