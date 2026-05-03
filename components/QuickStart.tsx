@@ -20,7 +20,7 @@ interface QuickStartQuestion {
     description: string;
     icon: React.ReactNode;
     placeholder: string;
-    suffix?: string;
+    prefix?: string;
     step?: number;
 }
 
@@ -140,7 +140,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             description: 'All your retirement accounts combined (401k, IRA, brokerage, etc.)',
             icon: <DollarSign className="w-5 h-5" />,
             placeholder: '100000',
-            suffix: '$',
+            prefix: '$',
             step: 1000
         },
         {
@@ -149,7 +149,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             description: 'Total amount you save each month toward retirement',
             icon: <PiggyBank className="w-5 h-5" />,
             placeholder: '2000',
-            suffix: '$',
+            prefix: '$',
             step: 100
         }
     ];
@@ -188,7 +188,12 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     };
 
     const formatInputValue = (value: number): string => {
-        return value.toLocaleString('en-US');
+        // Round monthly values to whole dollars, keep decimals for total savings
+        const roundedValue = currentQuestion.id === 'monthlySavings' ? Math.round(value) : value;
+        return roundedValue.toLocaleString('en-US', { 
+            minimumFractionDigits: currentQuestion.id === 'monthlySavings' ? 0 : 0,
+            maximumFractionDigits: currentQuestion.id === 'monthlySavings' ? 0 : 0
+        });
     };
 
     const calculateRetirementSummary = () => {
@@ -430,7 +435,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             onClick={onAdvancedMode}
                             className="px-6 py-3 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg transition-colors flex items-center justify-center gap-2"
                         >
-                            Try Advanced Mode
+                            View Detailed Analysis
                             <ArrowRight className="w-4 h-4" />
                         </button>
                     </div>
@@ -509,19 +514,19 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                 </div>
 
                 <div className="relative">
-                    <input
-                        type="text"
-                        inputMode="decimal"
-                        value={formatInputValue(params[currentQuestion.id] as number)}
-                        onChange={(e) => handleInputChange(e.target.value)}
-                        placeholder={currentQuestion.placeholder}
-                        className="w-full text-2xl font-semibold bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 pr-16 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
-                    />
-                    {currentQuestion.suffix && (
-                        <span className="absolute right-6 top-1/2 transform -translate-y-1/2 text-2xl text-muted-foreground pointer-events-none">
-                            {currentQuestion.suffix}
-                        </span>
-                    )}
+                    {currentQuestion.prefix && (
+                            <span className="absolute left-6 top-1/2 transform -translate-y-1/2 text-2xl text-muted-foreground pointer-events-none">
+                                {currentQuestion.prefix}
+                            </span>
+                        )}
+                        <input
+                            type="text"
+                            inputMode="numeric"
+                            value={formatInputValue(params[currentQuestion.id] as number)}
+                            onChange={(e) => handleInputChange(e.target.value)}
+                            placeholder={currentQuestion.placeholder}
+                            className="w-full text-2xl font-semibold bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 pl-16 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                        />
                 </div>
 
                 {/* Simple explanation */}
