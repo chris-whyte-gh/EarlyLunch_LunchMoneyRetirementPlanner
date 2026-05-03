@@ -48,6 +48,34 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         }
     }, []);
 
+    // Prevent browser back button from leaving the app
+    useEffect(() => {
+        const handlePopState = (event: PopStateEvent) => {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            
+            // Handle back navigation within the QuickStart flow
+            if (showResults) {
+                setShowResults(false);
+            } else if (currentStep > 0) {
+                setCurrentStep(currentStep - 1);
+            }
+            // Don't navigate away from the app
+            window.history.pushState(null, '', window.location.pathname);
+        };
+
+        // Add initial history entry
+        window.history.pushState(null, '', window.location.pathname);
+        
+        // Add popstate listener
+        window.addEventListener('popstate', handlePopState);
+        
+        // Cleanup
+        return () => {
+            window.removeEventListener('popstate', handlePopState);
+        };
+    }, [showResults, currentStep]);
+
     // Check for LunchMoney token and fetch data on mount
     useEffect(() => {
         const checkLunchMoneyConnection = async () => {
@@ -187,12 +215,12 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
         });
     };
 
-    const formatInputValue = (value: number): string => {
+    const formatInputValue = (value: number, questionId: keyof SimpleRetirementParams): string => {
         // Round monthly values to whole dollars, keep decimals for total savings
-        const roundedValue = currentQuestion.id === 'monthlySavings' ? Math.round(value) : value;
+        const roundedValue = questionId === 'monthlySavings' ? Math.round(value) : value;
         return roundedValue.toLocaleString('en-US', { 
-            minimumFractionDigits: currentQuestion.id === 'monthlySavings' ? 0 : 0,
-            maximumFractionDigits: currentQuestion.id === 'monthlySavings' ? 0 : 0
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
         });
     };
 
@@ -522,7 +550,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         <input
                             type="text"
                             inputMode="numeric"
-                            value={formatInputValue(params[currentQuestion.id] as number)}
+                            value={formatInputValue(params[currentQuestion.id] as number, currentQuestion.id)}
                             onChange={(e) => handleInputChange(e.target.value)}
                             placeholder={currentQuestion.placeholder}
                             className="w-full text-2xl font-semibold bg-slate-50 border border-slate-200 rounded-xl px-6 py-4 pl-16 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
