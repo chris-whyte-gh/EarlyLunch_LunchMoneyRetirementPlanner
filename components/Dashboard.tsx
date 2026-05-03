@@ -14,7 +14,7 @@ function convertToSimpleParams(complexParams: ModelingParams, assets: Asset[] = 
         currentAge: complexParams.currentAge,
         retirementAge: complexParams.retirementAge,
         totalSavings: actualTotalSavings > 0 ? actualTotalSavings : (complexParams.currentTaxable + complexParams.currentPreTax + complexParams.currentRoth),
-        monthlySavings: complexParams.monthlyContribution,
+        monthlySavings: Math.round(complexParams.monthlyContribution),
         annualReturn: 0.07, // Fixed 7% return for simplicity
         withdrawalRate: 0.04, // Fixed 4% withdrawal rate
     };
