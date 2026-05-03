@@ -242,19 +242,19 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Taxable</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable)}</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.taxable, { maxDecimals: 2 })}</div>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Pre-Tax</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.preTax)}</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.preTax, { maxDecimals: 2 })}</div>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Roth</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth)}</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.roth, { maxDecimals: 2 })}</div>
                                 </div>
                                 <div className="bg-white rounded-lg p-3 border border-blue-100">
                                     <div className="font-medium text-gray-900">Savings</div>
-                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.savings)}</div>
+                                    <div className="text-blue-600 font-bold">{formatCurrency(categorizedAssets.savings, { maxDecimals: 2 })}</div>
                                 </div>
                             </div>
                             <p className="text-xs text-blue-700 mt-3">
