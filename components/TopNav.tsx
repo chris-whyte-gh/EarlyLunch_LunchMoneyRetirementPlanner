@@ -14,8 +14,6 @@ export function TopNav({ activeTab, onTabChange, onQuickStart, showQuickStartBut
     const secondaryTabs = [
         { name: "HOW TO USE", value: "guide" },
         { name: "OVERVIEW", value: "overview" },
-        { name: "BUILD ROTH LADDER", value: "roth" },
-        { name: "PLAN SEPP (72t)", value: "sepp" },
         { name: "SETTINGS", value: "settings" },
     ];
 
