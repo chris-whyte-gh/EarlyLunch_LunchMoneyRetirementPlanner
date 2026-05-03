@@ -34,12 +34,17 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     const [dataError, setDataError] = useState<string | null>(null);
     const [hasLunchMoneyToken, setHasLunchMoneyToken] = useState(false);
     const [userSpendingEstimate, setUserSpendingEstimate] = useState<number | null>(null);
+    const [monthlySpending, setMonthlySpending] = useState<string>('');
+    const [yearlySpending, setYearlySpending] = useState<string>('');
 
     // Load user spending estimate on mount
     useEffect(() => {
         const stored = localStorage.getItem('userEstimatedSpending');
         if (stored) {
-            setUserSpendingEstimate(parseFloat(stored));
+            const monthly = parseFloat(stored);
+            setUserSpendingEstimate(monthly);
+            setMonthlySpending(monthly.toString());
+            setYearlySpending((monthly * 12).toString());
         }
     }, []);
 
@@ -234,16 +239,19 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             <div className="bg-white rounded-lg p-4 border border-amber-100">
                                 <div className="font-medium text-gray-900 mb-2">Basic Lifestyle</div>
                                 <div className="text-2xl font-bold text-amber-600">$3,000</div>
+                                <div className="text-sm text-gray-500 font-medium">$36,000/year</div>
                                 <div className="text-xs text-gray-600 mt-1">Housing, food, utilities, basic expenses</div>
                             </div>
                             <div className="bg-white rounded-lg p-4 border border-amber-100">
                                 <div className="font-medium text-gray-900 mb-2">Comfortable Lifestyle</div>
                                 <div className="text-2xl font-bold text-amber-600">$5,000</div>
+                                <div className="text-sm text-gray-500 font-medium">$60,000/year</div>
                                 <div className="text-xs text-gray-600 mt-1">Basic + travel, dining, entertainment</div>
                             </div>
                             <div className="bg-white rounded-lg p-4 border border-amber-100">
                                 <div className="font-medium text-gray-900 mb-2">Luxury Lifestyle</div>
                                 <div className="text-2xl font-bold text-amber-600">$8,000</div>
+                                <div className="text-sm text-gray-500 font-medium">$96,000/year</div>
                                 <div className="text-xs text-gray-600 mt-1">Comfortable + premium travel, hobbies</div>
                             </div>
                         </div>
@@ -252,42 +260,62 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         <div className="mt-6 p-4 bg-white rounded-lg border border-amber-200">
                             <div className="flex items-center gap-2 mb-3">
                                 <Wallet className="w-4 h-4 text-amber-600" />
-                                <h4 className="font-medium text-amber-900">What's your estimated monthly spending in retirement?</h4>
+                                <h4 className="font-medium text-amber-900">What's your estimated spending in retirement?</h4>
                             </div>
-                            <div className="flex items-center gap-3">
-                                <div className="relative flex-1">
-                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
-                                    <input
-                                        type="number"
-                                        min="0"
-                                        step="100"
-                                        placeholder="5000"
-                                        defaultValue={userSpendingEstimate || undefined}
-                                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg font-medium"
-                                        id="userSpendingInput"
-                                    />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Monthly Spending</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="100"
+                                            placeholder="5000"
+                                            value={monthlySpending}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setMonthlySpending(value);
+                                                const monthly = parseFloat(value) || 0;
+                                                const yearly = monthly * 12;
+                                                setYearlySpending(yearly.toString());
+                                                if (monthly > 0) {
+                                                    setUserSpendingEstimate(monthly);
+                                                    localStorage.setItem('userEstimatedSpending', monthly.toString());
+                                                }
+                                            }}
+                                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg font-medium"
+                                        />
+                                    </div>
                                 </div>
-                                <button
-                                    onClick={() => {
-                                        const input = document.getElementById('userSpendingInput') as HTMLInputElement;
-                                        const value = parseFloat(input.value) || 0;
-                                        if (value > 0) {
-                                            // Save user's spending estimate
-                                            localStorage.setItem('userEstimatedSpending', value.toString());
-                                            // Show updated analysis
-                                            const event = new CustomEvent('spendingEstimateUpdated', { detail: value });
-                                            window.dispatchEvent(event);
-                                            // Refresh the display
-                                            window.location.reload();
-                                        }
-                                    }}
-                                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
-                                >
-                                    Update Plan
-                                </button>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Yearly Spending</label>
+                                    <div className="relative">
+                                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+                                        <input
+                                            type="number"
+                                            min="0"
+                                            step="1000"
+                                            placeholder="60000"
+                                            value={yearlySpending}
+                                            onChange={(e) => {
+                                                const value = e.target.value;
+                                                setYearlySpending(value);
+                                                const yearly = parseFloat(value) || 0;
+                                                const monthly = yearly / 12;
+                                                setMonthlySpending(monthly.toString());
+                                                if (yearly > 0) {
+                                                    setUserSpendingEstimate(monthly);
+                                                    localStorage.setItem('userEstimatedSpending', monthly.toString());
+                                                }
+                                            }}
+                                            className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg font-medium"
+                                        />
+                                    </div>
+                                </div>
                             </div>
-                            <p className="text-xs text-gray-600 mt-2">
-                                Enter your estimated monthly expenses in retirement to see personalized recommendations
+                            <p className="text-xs text-gray-600 mt-3">
+                                Enter your estimated retirement expenses. Monthly and yearly values sync automatically.
                             </p>
                         </div>
                         
