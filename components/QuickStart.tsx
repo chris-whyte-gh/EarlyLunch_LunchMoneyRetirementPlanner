@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { SimpleRetirementParams, SimpleRetirementResults, calculateSimpleRetirement, getBeginnerRecommendations } from '@/lib/simpleModeling';
+import { SimpleRetirementParams, SimpleRetirementResults, calculateSimpleRetirement, calculateRequiredMonthlySavings, getBeginnerRecommendations } from '@/lib/simpleModeling';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
 import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
@@ -33,6 +33,15 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     const [loadingData, setLoadingData] = useState(false);
     const [dataError, setDataError] = useState<string | null>(null);
     const [hasLunchMoneyToken, setHasLunchMoneyToken] = useState(false);
+    const [userSpendingEstimate, setUserSpendingEstimate] = useState<number | null>(null);
+
+    // Load user spending estimate on mount
+    useEffect(() => {
+        const stored = localStorage.getItem('userEstimatedSpending');
+        if (stored) {
+            setUserSpendingEstimate(parseFloat(stored));
+        }
+    }, []);
 
     // Check for LunchMoney token and fetch data on mount
     useEffect(() => {
@@ -238,6 +247,50 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 <div className="text-xs text-gray-600 mt-1">Comfortable + premium travel, hobbies</div>
                             </div>
                         </div>
+                        
+                        {/* User Input Section */}
+                        <div className="mt-6 p-4 bg-white rounded-lg border border-amber-200">
+                            <div className="flex items-center gap-2 mb-3">
+                                <Wallet className="w-4 h-4 text-amber-600" />
+                                <h4 className="font-medium text-amber-900">What's your estimated monthly spending in retirement?</h4>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <div className="relative flex-1">
+                                    <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-medium">$</span>
+                                    <input
+                                        type="number"
+                                        min="0"
+                                        step="100"
+                                        placeholder="5000"
+                                        defaultValue={userSpendingEstimate || undefined}
+                                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent text-lg font-medium"
+                                        id="userSpendingInput"
+                                    />
+                                </div>
+                                <button
+                                    onClick={() => {
+                                        const input = document.getElementById('userSpendingInput') as HTMLInputElement;
+                                        const value = parseFloat(input.value) || 0;
+                                        if (value > 0) {
+                                            // Save user's spending estimate
+                                            localStorage.setItem('userEstimatedSpending', value.toString());
+                                            // Show updated analysis
+                                            const event = new CustomEvent('spendingEstimateUpdated', { detail: value });
+                                            window.dispatchEvent(event);
+                                            // Refresh the display
+                                            window.location.reload();
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors font-medium"
+                                >
+                                    Update Plan
+                                </button>
+                            </div>
+                            <p className="text-xs text-gray-600 mt-2">
+                                Enter your estimated monthly expenses in retirement to see personalized recommendations
+                            </p>
+                        </div>
+                        
                         <p className="text-sm text-amber-700 mt-4">
                             Most retirees need $3,000-$5,000/month for a comfortable retirement. Your current plan provides ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month.
                         </p>
@@ -256,20 +309,30 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 </div>
                                 <div className="text-sm text-muted-foreground">Current projected monthly income</div>
                                 <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${
-                                    summary.monthlyIncomeInRetirement >= 3000 
+                                    summary.monthlyIncomeInRetirement >= (userSpendingEstimate || 3000) 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
                                 }`}>
-                                    {summary.monthlyIncomeInRetirement >= 3000 ? 'On Track' : 'Needs Improvement'}
+                                    {summary.monthlyIncomeInRetirement >= (userSpendingEstimate || 3000) ? 'On Track' : 'Needs Improvement'}
                                 </div>
                             </div>
                             <div className="text-center">
                                 <div className="text-3xl font-bold text-purple-600 mb-1">
-                                    ${summary.recommendedMonthlySavings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                    ${(() => {
+                                        const targetIncome = userSpendingEstimate || 3000;
+                                        const targetRetirementSavings = (targetIncome * 12) / params.withdrawalRate;
+                                        const requiredSavings = calculateRequiredMonthlySavings(
+                                            targetRetirementSavings,
+                                            params.totalSavings,
+                                            summary.yearsToRetirement,
+                                            params.annualReturn
+                                        );
+                                        return requiredSavings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+                                    })()}
                                 </div>
                                 <div className="text-sm text-muted-foreground">Recommended monthly savings</div>
                                 <div className="text-xs text-gray-600 mt-2">
-                                    To reach $3,000/month retirement income
+                                    To reach ${userSpendingEstimate ? userSpendingEstimate.toLocaleString() : '3,000'}/month retirement income
                                 </div>
                             </div>
                         </div>
