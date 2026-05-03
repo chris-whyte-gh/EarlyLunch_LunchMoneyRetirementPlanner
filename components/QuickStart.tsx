@@ -200,7 +200,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 bg-slate-50 rounded-xl p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 rounded-xl p-6 mb-6">
                         <div className="text-center">
                             <div className="text-3xl font-bold text-primary mb-1">
                                 {summary.yearsToRetirement}
@@ -213,11 +213,65 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             </div>
                             <div className="text-sm text-muted-foreground">Current total savings</div>
                         </div>
-                        <div className="text-center">
-                            <div className="text-3xl font-bold text-blue-600 mb-1">
-                                ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </div>
+
+                    {/* Estimated Spending Section */}
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 mb-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <DollarSign className="w-5 h-5 text-amber-600" />
+                            <h3 className="font-semibold text-amber-900">Estimated Monthly Spending in Retirement</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white rounded-lg p-4 border border-amber-100">
+                                <div className="font-medium text-gray-900 mb-2">Basic Lifestyle</div>
+                                <div className="text-2xl font-bold text-amber-600">$3,000</div>
+                                <div className="text-xs text-gray-600 mt-1">Housing, food, utilities, basic expenses</div>
                             </div>
-                            <div className="text-sm text-muted-foreground">Monthly income in retirement</div>
+                            <div className="bg-white rounded-lg p-4 border border-amber-100">
+                                <div className="font-medium text-gray-900 mb-2">Comfortable Lifestyle</div>
+                                <div className="text-2xl font-bold text-amber-600">$5,000</div>
+                                <div className="text-xs text-gray-600 mt-1">Basic + travel, dining, entertainment</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-4 border border-amber-100">
+                                <div className="font-medium text-gray-900 mb-2">Luxury Lifestyle</div>
+                                <div className="text-2xl font-bold text-amber-600">$8,000</div>
+                                <div className="text-xs text-gray-600 mt-1">Comfortable + premium travel, hobbies</div>
+                            </div>
+                        </div>
+                        <p className="text-sm text-amber-700 mt-4">
+                            Most retirees need $3,000-$5,000/month for a comfortable retirement. Your current plan provides ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}/month.
+                        </p>
+                    </div>
+
+                    {/* Retirement Income Analysis */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+                        <div className="flex items-center gap-2 mb-4">
+                            <TrendingUp className="w-5 h-5 text-blue-600" />
+                            <h3 className="font-semibold text-blue-900">Your Retirement Income Analysis</h3>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-blue-600 mb-1">
+                                    ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                                <div className="text-sm text-muted-foreground">Current projected monthly income</div>
+                                <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${
+                                    summary.monthlyIncomeInRetirement >= 3000 
+                                        ? 'bg-green-100 text-green-800' 
+                                        : 'bg-red-100 text-red-800'
+                                }`}>
+                                    {summary.monthlyIncomeInRetirement >= 3000 ? 'On Track' : 'Needs Improvement'}
+                                </div>
+                            </div>
+                            <div className="text-center">
+                                <div className="text-3xl font-bold text-purple-600 mb-1">
+                                    ${summary.recommendedMonthlySavings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                </div>
+                                <div className="text-sm text-muted-foreground">Recommended monthly savings</div>
+                                <div className="text-xs text-gray-600 mt-2">
+                                    To reach $3,000/month retirement income
+                                </div>
+                            </div>
                         </div>
                     </div>
 
