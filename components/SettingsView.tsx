@@ -239,8 +239,7 @@ export function SettingsView() {
                         </p>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
+                    <div className="space-y-2">
                             <label className="text-sm font-medium text-foreground">
                                 Birth Year
                             </label>
@@ -251,7 +250,6 @@ export function SettingsView() {
                                 placeholder="e.g. 1990"
                                 className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
                             />
-                        </div>
                         </div>
 
                     <div className="flex items-center justify-between pt-2">
