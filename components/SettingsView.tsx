@@ -10,7 +10,6 @@ import { STORAGE_KEYS } from '@/lib/constants';
 export function SettingsView() {
     const [token, setToken] = useState('');
     const [birthYear, setBirthYear] = useState('');
-    const [birthMonth, setBirthMonth] = useState('');
     const [status, setStatus] = useState<'idle' | 'saved' | 'removed'>('idle');
     const [excludedIds, setExcludedIds] = useState<number[]>([]);
     const [spendingSourceIds, setSpendingSourceIds] = useState<number[]>([]);
@@ -105,9 +104,6 @@ export function SettingsView() {
         const storedBirthYear = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
         if (storedBirthYear) setBirthYear(storedBirthYear);
 
-        const storedBirthMonth = localStorage.getItem(STORAGE_KEYS.BIRTH_MONTH);
-        if (storedBirthMonth) setBirthMonth(storedBirthMonth);
-
         const storedExcluded = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
         if (storedExcluded) {
             try {
@@ -136,9 +132,6 @@ export function SettingsView() {
         }
         if (birthYear.trim()) {
             localStorage.setItem(STORAGE_KEYS.BIRTH_YEAR, birthYear.trim());
-        }
-        if (birthMonth.trim()) {
-            localStorage.setItem(STORAGE_KEYS.BIRTH_MONTH, birthMonth.trim());
         }
 
         // Save IDs
@@ -186,10 +179,8 @@ export function SettingsView() {
     const handleRemove = () => {
         localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
         localStorage.removeItem(STORAGE_KEYS.BIRTH_YEAR);
-        localStorage.removeItem(STORAGE_KEYS.BIRTH_MONTH);
         setToken('');
         setBirthYear('');
-        setBirthMonth('');
         setStatus('removed');
         setAssets([]);
         setTimeout(() => setStatus('idle'), 3000);
@@ -261,22 +252,7 @@ export function SettingsView() {
                                 className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
                             />
                         </div>
-                        <div className="space-y-2">
-                            <label className="text-sm font-medium text-foreground">
-                                Birth Month
-                            </label>
-                            <select
-                                value={birthMonth}
-                                onChange={(e) => setBirthMonth(e.target.value)}
-                                className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono appearance-none"
-                            >
-                                <option value="">Select...</option>
-                                {Array.from({ length: 12 }, (_, i) => i + 1).map(m => (
-                                    <option key={m} value={m}>{new Date(0, m - 1).toLocaleString('default', { month: 'long' })}</option>
-                                ))}
-                            </select>
                         </div>
-                    </div>
 
                     <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center gap-3">

@@ -1,7 +1,6 @@
 export const STORAGE_KEYS = {
     ACCESS_TOKEN: 'lunch_money_token',
     BIRTH_YEAR: 'retirement_birth_year',
-    BIRTH_MONTH: 'retirement_birth_month',
     EXCLUDED_ASSETS: 'excluded_asset_ids',
     SPENDING_SOURCES: 'spending_source_ids',
     ACTIVE_TAB: 'retirement_active_tab',

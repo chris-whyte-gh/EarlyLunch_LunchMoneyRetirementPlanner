@@ -170,7 +170,7 @@ export function Dashboard() {
     }, [params, isParamsLoaded]);
 
     // Process LunchMoney data (used for both fresh and cached data)
-    const processLunchMoneyData = (data: any, token: string, birthYearStr: string | null, birthMonthStr: string | null) => {
+    const processLunchMoneyData = (data: any, token: string, birthYearStr: string | null) => {
         // Unpack excluded IDs and spending sources
         let excludedIds: number[] = [];
         let spendingIds: number[] = [];
@@ -205,19 +205,8 @@ export function Dashboard() {
 
                 const now = new Date();
                 const currentYear = now.getFullYear();
-                const currentMonth = now.getMonth() + 1; // 1-12
 
                 let age = currentYear - year;
-
-                // Adjust for birth month if available
-                if (birthMonthStr) {
-                    const month = parseInt(birthMonthStr);
-                    if (!isNaN(month)) {
-                        if (currentMonth < month) {
-                            age--;
-                        }
-                    }
-                }
 
                 calculatedAge = age;
             } else {
@@ -279,7 +268,6 @@ export function Dashboard() {
                 // Check for token in localStorage first
                 const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
                 const birthYearStr = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
-                const birthMonthStr = localStorage.getItem(STORAGE_KEYS.BIRTH_MONTH);
                 
                 // Check for cached data
                 const cachedData = localStorage.getItem('lunchmoneyCache');
@@ -292,7 +280,7 @@ export function Dashboard() {
                         console.log('Using cached LunchMoney data');
                         const data = JSON.parse(cachedData);
                         // Process cached data
-                        processLunchMoneyData(data, token || '', birthYearStr, birthMonthStr);
+                        processLunchMoneyData(data, token || '', birthYearStr);
                         setLoading(false);
                         clearTimeout(timeoutId);
                         return;
@@ -358,19 +346,8 @@ export function Dashboard() {
 
                         const now = new Date();
                         const currentYear = now.getFullYear();
-                        const currentMonth = now.getMonth() + 1; // 1-12
 
                         let age = currentYear - year;
-
-                        // Adjust for birth month if available
-                        if (birthMonthStr) {
-                            const month = parseInt(birthMonthStr);
-                            if (!isNaN(month)) {
-                                if (currentMonth < month) {
-                                    age--;
-                                }
-                            }
-                        }
 
                         calculatedAge = age;
                     } else {
