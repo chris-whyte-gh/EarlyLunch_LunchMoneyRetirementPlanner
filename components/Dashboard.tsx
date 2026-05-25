@@ -227,6 +227,25 @@ export function Dashboard() {
             }
         }
 
+        // Calculate monthly retirement contributions from selected categories
+        let calculatedMonthlySavings = undefined;
+        const retirementCategoryIds = localStorage.getItem(STORAGE_KEYS.RETIREMENT_CATEGORIES);
+        if (retirementCategoryIds && data.transactions) {
+            try {
+                const categoryIds = JSON.parse(retirementCategoryIds);
+                if (categoryIds.length > 0) {
+                    const retirementContributions = (data.transactions as Transaction[])
+                        .filter(t => t.category_id && categoryIds.includes(t.category_id))
+                        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                    if (retirementContributions > 0) {
+                        calculatedMonthlySavings = retirementContributions;
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to parse retirement category IDs', e);
+            }
+        }
+
         setParams(prev => {
             // We only want to override expectedAnnualSpend if it's the first time or demo
             const shouldOverrideSpend = !localStorage.getItem(STORAGE_KEYS.SCENARIO_PARAMS) || token === 'demo';
@@ -238,6 +257,7 @@ export function Dashboard() {
                 currentRoth: buckets.roth,
                 currentTaxable: buckets.taxable,
                 expectedAnnualSpend: (shouldOverrideSpend && calculatedAnnualSpend) ? calculatedAnnualSpend : prev.expectedAnnualSpend,
+                monthlyContribution: calculatedMonthlySavings ?? prev.monthlyContribution,
             };
         });
 
@@ -368,6 +388,25 @@ export function Dashboard() {
                     }
                 }
 
+                // Calculate monthly retirement contributions from selected categories
+                let calculatedMonthlySavings = undefined;
+                const retirementCategoryIds = localStorage.getItem(STORAGE_KEYS.RETIREMENT_CATEGORIES);
+                if (retirementCategoryIds && data.transactions) {
+                    try {
+                        const categoryIds = JSON.parse(retirementCategoryIds);
+                        if (categoryIds.length > 0) {
+                            const retirementContributions = (data.transactions as Transaction[])
+                                .filter(t => t.category_id && categoryIds.includes(t.category_id))
+                                .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+                            if (retirementContributions > 0) {
+                                calculatedMonthlySavings = retirementContributions;
+                            }
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse retirement category IDs', e);
+                    }
+                }
+
                 setParams(prev => {
                     // We only want to override expectedAnnualSpend if it's the first time or demo
                     const shouldOverrideSpend = !localStorage.getItem(STORAGE_KEYS.SCENARIO_PARAMS) || token === 'demo';
@@ -379,6 +418,7 @@ export function Dashboard() {
                         currentRoth: buckets.roth,
                         currentTaxable: buckets.taxable,
                         expectedAnnualSpend: (shouldOverrideSpend && calculatedAnnualSpend) ? calculatedAnnualSpend : prev.expectedAnnualSpend,
+                        monthlyContribution: calculatedMonthlySavings ?? prev.monthlyContribution,
                     };
                 });
 

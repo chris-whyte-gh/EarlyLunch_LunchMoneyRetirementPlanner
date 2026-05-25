@@ -107,6 +107,21 @@ export class LunchMoneyClient {
         const data = await this.fetch<{ categories: Category[] }>('/categories');
         return data.categories;
     }
+
+    async getRetirementContributions(
+        categoryIds: number[],
+        startDate?: string,
+        endDate?: string
+    ): Promise<number> {
+        if (categoryIds.length === 0) return 0;
+
+        const transactions = await this.getTransactions(startDate, endDate);
+        const retirementContributions = transactions
+            .filter(t => t.category_id && categoryIds.includes(t.category_id))
+            .reduce((sum, t) => sum + parseFloat(t.amount), 0);
+
+        return retirementContributions;
+    }
 }
 
 export const PlaidAccountSchema = z.object({
