@@ -7,4 +7,5 @@ export const STORAGE_KEYS = {
     SCENARIO_PARAMS: 'retirement_scenario_params',
     USE_FIXED_SPEND: 'retirement_use_fixed_spend',
     EXPECTED_ANNUAL_SPEND: 'retirement_expected_annual_spend',
+    RETIREMENT_CATEGORIES: 'retirement_category_ids',
 } as const;

@@ -102,6 +102,11 @@ export class LunchMoneyClient {
         const data = await this.fetch<Budget[]>(`/budgets${queryString}`);
         return data;
     }
+
+    async getCategories(): Promise<Category[]> {
+        const data = await this.fetch<{ categories: Category[] }>('/categories');
+        return data.categories;
+    }
 }
 
 export const PlaidAccountSchema = z.object({
@@ -133,6 +138,23 @@ export const BudgetSchema = z.object({
 });
 
 export type Budget = z.infer<typeof BudgetSchema>;
+
+export const CategorySchema = z.object({
+    id: z.number(),
+    name: z.string(),
+    description: z.string().optional().nullable(),
+    is_income: z.boolean(),
+    exclude_from_budget: z.boolean(),
+    exclude_from_totals: z.boolean(),
+    updated_at: z.string(),
+    created_at: z.string(),
+    is_group: z.boolean(),
+    group_id: z.number().nullable(),
+    order: z.number(),
+    children: z.array(z.any()).optional(),
+});
+
+export type Category = z.infer<typeof CategorySchema>;
 
 // Singleton instance helper
 export function getLunchMoneyClient(token?: string | null) {

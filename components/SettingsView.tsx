@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Save, Trash2, CheckCircle, AlertCircle, Key, Search, RefreshCw, Info } from 'lucide-react';
-import { Asset } from '@/lib/lunchmoney';
+import { Asset, Category, getLunchMoneyClient } from '@/lib/lunchmoney';
 import { categorizeAsset, getCategoryDisplayName } from '@/lib/assetCategorization';
 import { STORAGE_KEYS } from '@/lib/constants';
 
@@ -18,6 +18,9 @@ export function SettingsView() {
     const [categoryOverrides, setCategoryOverrides] = useState<Record<number, string>>({});
     const [refreshKey, setRefreshKey] = useState(0);
     const [isFirstLoad, setIsFirstLoad] = useState(true);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [selectedRetirementCategories, setSelectedRetirementCategories] = useState<number[]>([]);
+    const [categoriesLoading, setCategoriesLoading] = useState(false);
 
     // Debug Data State
     const [assets, setAssets] = useState<Asset[]>([]);
@@ -87,12 +90,30 @@ export function SettingsView() {
         }
     };
 
+    const fetchCategories = async (apiToken: string) => {
+        setCategoriesLoading(true);
+        try {
+            const client = getLunchMoneyClient(apiToken);
+            const fetchedCategories = await client.getCategories();
+            // Filter out group categories (only show individual categories)
+            const individualCategories = fetchedCategories.filter(c => !c.is_group);
+            setCategories(individualCategories);
+        } catch (error) {
+            console.error('Failed to fetch categories:', error);
+        } finally {
+            setCategoriesLoading(false);
+        }
+    };
+
     useEffect(() => {
         const storedToken = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
         if (storedToken) {
             setToken(storedToken);
             // Auto-fetch data if token exists
             fetchDebugData(storedToken);
+            
+            // Fetch categories for retirement contribution selection
+            fetchCategories(storedToken);
         }
 
         // Load category overrides
@@ -103,6 +124,15 @@ export function SettingsView() {
 
         const storedBirthYear = localStorage.getItem(STORAGE_KEYS.BIRTH_YEAR);
         if (storedBirthYear) setBirthYear(storedBirthYear);
+
+        const storedRetirementCategories = localStorage.getItem(STORAGE_KEYS.RETIREMENT_CATEGORIES);
+        if (storedRetirementCategories) {
+            try {
+                setSelectedRetirementCategories(JSON.parse(storedRetirementCategories));
+            } catch (e) {
+                console.error("Failed to parse retirement categories", e);
+            }
+        }
 
         const storedExcluded = localStorage.getItem(STORAGE_KEYS.EXCLUDED_ASSETS);
         if (storedExcluded) {
@@ -137,6 +167,7 @@ export function SettingsView() {
         // Save IDs
         localStorage.setItem(STORAGE_KEYS.EXCLUDED_ASSETS, JSON.stringify(excludedIds));
         localStorage.setItem(STORAGE_KEYS.SPENDING_SOURCES, JSON.stringify(spendingSourceIds));
+        localStorage.setItem(STORAGE_KEYS.RETIREMENT_CATEGORIES, JSON.stringify(selectedRetirementCategories));
 
         setPreviousToken(token.trim());
         setStatus('saved');
@@ -251,6 +282,36 @@ export function SettingsView() {
                                 className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
                             />
                         </div>
+
+                    {categories.length > 0 && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-medium text-foreground">
+                                Retirement Contribution Categories
+                            </label>
+                            <p className="text-xs text-muted-foreground">
+                                Select categories that represent your retirement account contributions
+                            </p>
+                            <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto bg-slate-50 border border-input rounded-lg p-3">
+                                {categories.map((category) => (
+                                    <label key={category.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                                        <input
+                                            type="checkbox"
+                                            checked={selectedRetirementCategories.includes(category.id)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedRetirementCategories([...selectedRetirementCategories, category.id]);
+                                                } else {
+                                                    setSelectedRetirementCategories(selectedRetirementCategories.filter(id => id !== category.id));
+                                                }
+                                            }}
+                                            className="rounded border-gray-300 text-primary focus:ring-primary"
+                                        />
+                                        <span className="truncate">{category.name}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     <div className="flex items-center justify-between pt-2">
                         <div className="flex items-center gap-3">
