@@ -36,6 +36,9 @@ yarn-error.log*
 # node binaries
 node-v20.*
 
+# utility scripts
+*.sh
+
 # vercel
 .vercel
 
