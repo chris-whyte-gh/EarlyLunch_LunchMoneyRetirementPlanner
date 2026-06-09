@@ -1,17 +1,17 @@
 # 🎯 Retirement Modeler with Real Data Integration
 
-A sophisticated retirement planning tool that connects with your actual financial data through LunchMoney API. Model complex scenarios including Roth conversions, SEPP strategies, and optimize your withdrawal sequence for maximum tax efficiency.
+A sophisticated retirement planning tool that connects with your actual financial data through LunchMoney API. Get personalized retirement projections based on your real account balances and spending patterns.
 
 **Perfect for:** Tech-savvy individuals who want data-driven retirement planning beyond simple calculators.
 
 ## Why Choose This Tool?
 
-- **Tiered Dashboard** - Start simple, progress to advanced features at your own pace
 - **Real Data Integration** - Connects with LunchMoney API for actual balances and transactions
 - **Beginner-Friendly QuickStart** - 4 simple questions to get personalized retirement projections
-- **Progressive Disclosure** - Complex features revealed gradually, no overwhelming interfaces
-- **Advanced Modeling** - Multiple tax buckets, inflation-adjusted projections, and scenario analysis  
-- **Interactive Scenarios** - Test Roth conversions, SEPP strategies, and early retirement plans
+- **User-Configurable Categories** - Select which LunchMoney categories represent your retirement contributions
+- **Accurate Savings Calculation** - Uses actual transaction data from your selected categories
+- **Simplified Input** - Birth year only (no birth month needed) for easier onboarding
+- **Smart Spending Estimates** - Monthly/yearly spending sync with lifestyle benchmarks
 - **Beautiful Visualizations** - Interactive charts for portfolio growth and withdrawal strategies
 - **Privacy First** - Your financial data stays on your machine when running locally
 
@@ -33,39 +33,27 @@ A sophisticated retirement planning tool that connects with your actual financia
 
 ## Dashboard Experience
 
-### Three-Tier Approach
-
-We've designed a progressive dashboard experience that grows with your needs:
-
-#### **QuickStart Mode** 
+### QuickStart Mode
 - **4 Simple Questions:** Age, retirement age, current savings, monthly savings
 - **Auto-Populated Data:** Integrates with LunchMoney for real account balances
+- **Smart Spending Estimates:** Monthly/yearly spending sync with lifestyle benchmarks
 - **Clear Results:** Shows when you can retire and expected monthly income
 - **Perfect for:** First-time users and quick retirement checks
 
-#### **Simple Dashboard** 
-- **Key Results:** Years to retirement, monthly income, total savings
-- **Quick Settings:** Retirement age, monthly savings, risk level
+### Dashboard Features
+- **Real Account Data:** Automatically imports your LunchMoney account balances
+- **Retirement Categories:** Select which categories represent your retirement contributions
+- **Accurate Calculations:** Uses actual transaction data for retirement savings
+- **Simplified Input:** Birth year only for easier onboarding
 - **Visual Timeline:** Easy-to-understand progress visualization
-- **Clear Actions:** "See Detailed Charts" or "Advanced Options"
-
-#### **Details Dashboard**
-- **Main Charts:** Portfolio projection and withdrawal strategies
-- **Essential Controls:** Important settings without overwhelming complexity
-- **Key Metrics:** Focus on the most important retirement numbers
-- **Perfect for:** Users who want more analysis without full complexity
-
-#### **Advanced Dashboard**
-- **Full Control:** All tax optimization strategies and scenario modeling
-- **Complete Charts:** Every visualization and data point
-- **Power Features:** Roth conversions, SEPP planning, stress testing
-- **Perfect for:** Power users and financial optimization enthusiasts
+- **Detailed Analysis:** Option to view comprehensive charts and projections
 
 ### User Flow
-1. **QuickStart** (4 questions) 
-2. **Simple Dashboard** (clear results)
-3. **Details Dashboard** (more charts) 
-4. **Advanced Dashboard** (full control)
+1. **Connect LunchMoney** - Enter your access token and birth year
+2. **Select Categories** - Choose which categories represent retirement contributions
+3. **QuickStart** - Answer 4 simple questions for personalized projections
+4. **View Results** - See when you can retire and expected monthly income
+5. **Detailed Analysis** - Explore comprehensive charts and projections
 
 ## Getting Started
 
@@ -98,6 +86,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 *Full control with all tax optimization features*
 <img width="1061" height="745" alt="image" src="https://github.com/user-attachments/assets/a7807160-01a4-4c71-b382-09af6ba55a75" />
 
+
 ## 🤝 Contributing
 
 We welcome contributions! This is a great project for developers interested in:
@@ -107,6 +96,14 @@ We welcome contributions! This is a great project for developers interested in:
 - **API integrations** (LunchMoney, financial data)
 - **Retirement planning** algorithms
 - **TypeScript/React** development
+
+### Recent Improvements
+
+- **User-configurable retirement categories** - Select which LunchMoney categories represent retirement contributions
+- **Accurate savings calculation** - Uses actual transaction data instead of budget estimates
+- **Simplified input** - Birth year only (removed birth month for easier onboarding)
+- **Smart spending estimates** - Monthly/yearly spending sync with lifestyle benchmarks
+- **Improved UX** - Fixed decimal point handling, back button behavior, and input formatting
 
 ### Getting Started
 
