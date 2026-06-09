@@ -87,27 +87,16 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### QuickStart Mode
 *Beginner-friendly onboarding with 4 simple questions*
-<!-- TODO: Add QuickStart screenshot here -->
+<img width="1160" height="670" alt="image" src="https://github.com/user-attachments/assets/7f2857f6-436b-4b0e-8b29-d94fd32410df" />
 
-### Simple Dashboard
-*Clear results with key metrics and quick settings*
-<!-- TODO: Add Simple Dashboard screenshot here -->
+<img width="709" height="580" alt="image" src="https://github.com/user-attachments/assets/adde737e-36b0-4be5-addc-aa32aebfbd69" />
 
 ### Details Dashboard
-*Main charts and essential controls*
-<!-- TODO: Add Details Dashboard screenshot here -->
+<img width="949" height="691" alt="image" src="https://github.com/user-attachments/assets/509c4e0c-ae10-4a08-b2e4-9a38d912742c" />
 
 ### Advanced Dashboard
 *Full control with all tax optimization features*
-<img width="1325" height="787" alt="Advanced Dashboard" src="https://github.com/user-attachments/assets/fa21a0d7-e71a-44da-a4ee-d00a06cd2c8b" />
-
-### LunchMoney Integration
-*Real account data automatically imported*
-<!-- TODO: Add LunchMoney integration screenshot here -->
-
-### Legacy Screenshots
-**Roth Conversion Page**
-<img width="1230" height="782" alt="Roth Conversion" src="https://github.com/user-attachments/assets/9634ce79-ab0f-4fef-a1dd-ed3e9cee406b" />
+<img width="1061" height="745" alt="image" src="https://github.com/user-attachments/assets/a7807160-01a4-4c71-b382-09af6ba55a75" />
 
 ## 🤝 Contributing
 
