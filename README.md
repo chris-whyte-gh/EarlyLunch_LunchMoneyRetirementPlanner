@@ -75,19 +75,17 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ### QuickStart Mode
 *Beginner-friendly onboarding with 4 simple questions*
-<!-- TODO: Add QuickStart screenshot here -->
+<img width="1160" height="670" alt="image" src="https://github.com/user-attachments/assets/7f2857f6-436b-4b0e-8b29-d94fd32410df" />
 
-### Dashboard with Real Data
-*Real account data automatically imported from LunchMoney*
-<!-- TODO: Add Dashboard screenshot here -->
+<img width="709" height="580" alt="image" src="https://github.com/user-attachments/assets/adde737e-36b0-4be5-addc-aa32aebfbd69" />
 
-### Retirement Category Selection
-*Select which LunchMoney categories represent your retirement contributions*
-<!-- TODO: Add category selection screenshot here -->
+### Details Dashboard
+<img width="949" height="691" alt="image" src="https://github.com/user-attachments/assets/509c4e0c-ae10-4a08-b2e4-9a38d912742c" />
 
-### Detailed Analysis
-*Comprehensive charts and projections for retirement planning*
-<!-- TODO: Add detailed analysis screenshot here -->
+### Advanced Dashboard
+*Full control with all tax optimization features*
+<img width="1061" height="745" alt="image" src="https://github.com/user-attachments/assets/a7807160-01a4-4c71-b382-09af6ba55a75" />
+
 
 ## 🤝 Contributing
 
