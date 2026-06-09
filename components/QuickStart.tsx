@@ -359,13 +359,13 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                             <TrendingUp className="w-5 h-5 text-blue-600" />
                             <h3 className="font-semibold text-blue-900">Your Retirement Income Analysis</h3>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-blue-600 mb-1">
+                                <div className="text-3xl font-bold text-blue-600 mb-3">
                                     ${summary.monthlyIncomeInRetirement.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                                 </div>
-                                <div className="text-sm text-muted-foreground">Current projected monthly income</div>
-                                <div className={`mt-2 px-3 py-1 rounded-full text-xs font-bold ${
+                                <div className="text-sm text-muted-foreground mb-2">Current projected monthly income</div>
+                                <div className={`px-3 py-1 rounded-full text-xs font-bold ${
                                     summary.monthlyIncomeInRetirement >= (userSpendingEstimate || 3000) 
                                         ? 'bg-green-100 text-green-800' 
                                         : 'bg-red-100 text-red-800'
@@ -374,7 +374,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                 </div>
                             </div>
                             <div className="text-center">
-                                <div className="text-3xl font-bold text-purple-600 mb-1">
+                                <div className="text-3xl font-bold text-purple-600 mb-3">
                                     ${(() => {
                                         const targetIncome = userSpendingEstimate || 3000;
                                         const targetRetirementSavings = (targetIncome * 12) / params.withdrawalRate;
@@ -387,8 +387,8 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                                         return requiredSavings.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
                                     })()}
                                 </div>
-                                <div className="text-sm text-muted-foreground">Recommended monthly savings</div>
-                                <div className="text-xs text-gray-600 mt-2">
+                                <div className="text-sm text-muted-foreground mb-2">Recommended monthly savings</div>
+                                <div className="text-xs text-gray-600">
                                     To reach ${userSpendingEstimate ? userSpendingEstimate.toLocaleString() : '3,000'}/month retirement income
                                 </div>
                             </div>
