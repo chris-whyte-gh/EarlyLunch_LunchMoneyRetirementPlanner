@@ -121,9 +121,10 @@ export function calculateBuckets(assets: Asset[]): { taxable: number, pretax: nu
 
 export function calculateMonthlyExpenses(transactions: Transaction[]): number {
     if (transactions.length === 0) return 0;
+    // v2 API: positive amounts are debits (expenses)
     const expenses = transactions
-        .filter(t => parseFloat(t.amount) < 0)
-        .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount)), 0);
+        .filter(t => parseFloat(t.amount) > 0)
+        .reduce((sum, t) => sum + parseFloat(t.amount), 0);
 
     const dates = transactions.map(t => new Date(t.date).getTime());
     const minDate = Math.min(...dates);

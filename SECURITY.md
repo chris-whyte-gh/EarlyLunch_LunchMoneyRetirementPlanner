@@ -5,11 +5,12 @@
 This project takes security seriously, especially when handling financial data. Here are the security measures we've implemented:
 
 ### Data Protection
-- **No server-side credential storage** - API tokens are stored only in browser localStorage
-- **Client-side processing** - All financial calculations happen in the user's browser
-- **HTTPS enforcement** - All API communications use secure connections
+- **Local browser storage** - API tokens and cached API responses are stored in browser localStorage
+- **Client-side processing** - Financial calculations run in the user's browser
+- **No server-side credential storage** - Tokens pass through our API route to Lunch Money but are not persisted on our servers
+- **HTTPS enforcement** - All API communications use encrypted connections
 - **Token validation** - API tokens are validated before use
-- **Demo mode** - Safe testing without real credentials
+- **Demo mode** - Safe testing without real credentials (enter `demo` as the token)
 
 ### API Security
 - **LunchMoney API integration** follows OAuth best practices

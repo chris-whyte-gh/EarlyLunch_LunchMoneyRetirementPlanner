@@ -3,7 +3,8 @@
 import React, { useEffect, useState } from 'react';
 import { cn, formatCurrency } from '@/lib/utils';
 import { Save, Trash2, CheckCircle, AlertCircle, Key, Search, RefreshCw, Info } from 'lucide-react';
-import { Asset, Category, getLunchMoneyClient } from '@/lib/lunchmoney';
+import { Asset, Category } from '@/lib/lunchmoney';
+import { fetchLunchMoneyCategories, fetchLunchMoneyData } from '@/lib/lunchmoneyApi';
 import { categorizeAsset, getCategoryDisplayName } from '@/lib/assetCategorization';
 import { STORAGE_KEYS } from '@/lib/constants';
 
@@ -31,12 +32,7 @@ export function SettingsView() {
         setDebugLoading(true);
         setDebugError(null);
         try {
-            const headers: HeadersInit = { 'Authorization': `Bearer ${apiToken}` };
-            const res = await fetch('/api/lunchmoney', { headers });
-
-            if (!res.ok) throw new Error(`API Error: ${res.status}`);
-
-            const data = await res.json();
+            const data = await fetchLunchMoneyData(apiToken);
             const fetchedAssets = data.assets || [];
             setAssets(fetchedAssets);
             
@@ -46,19 +42,21 @@ export function SettingsView() {
             
             fetchedAssets.forEach((asset: Asset) => {
                 const category = categorizeAsset(asset);
+                const typeName = asset.type_name.toLowerCase();
+                const subtypeName = (asset.subtype_name || '').toLowerCase();
                 // Portfolio Assets: Retirement accounts + investment accounts
                 if (category === 'preTax' || category === 'roth' || 
-                    (category === 'taxable' && (asset.type_name.includes('Brokerage') || 
-                                              asset.type_name.includes('Investment') ||
-                                              asset.type_name.includes('Stock') ||
-                                              asset.type_name.includes('ETF')))) {
+                    (category === 'taxable' && (typeName.includes('brokerage') || 
+                                              typeName.includes('investment') ||
+                                              typeName.includes('stock') ||
+                                              typeName.includes('etf')))) {
                     // Include in portfolio (don't exclude)
                 }
                 // Spending Tracking: Checking, savings, credit cards
                 else if (category === 'taxable' && 
-                        (asset.type_name.includes('Checking') || 
-                         asset.type_name.includes('Savings') ||
-                         asset.type_name.includes('Credit'))) {
+                        (typeName.includes('checking') || subtypeName.includes('checking') ||
+                         typeName.includes('savings') || subtypeName.includes('savings') ||
+                         typeName.includes('credit') || typeName === 'cash')) {
                     autoSpendingSourceIds.push(asset.id);
                 }
                 // Exclude: Loans, mortgages, other non-assets
@@ -82,8 +80,8 @@ export function SettingsView() {
             
             // Mark first load as complete
             setIsFirstLoad(false);
-        } catch (e: any) {
-            setDebugError(e.message);
+        } catch (e: unknown) {
+            setDebugError(e instanceof Error ? e.message : 'Connection failed');
             setAssets([]);
         } finally {
             setDebugLoading(false);
@@ -93,9 +91,7 @@ export function SettingsView() {
     const fetchCategories = async (apiToken: string) => {
         setCategoriesLoading(true);
         try {
-            const client = getLunchMoneyClient(apiToken);
-            const fetchedCategories = await client.getCategories();
-            // Filter out group categories (only show individual categories)
+            const fetchedCategories = await fetchLunchMoneyCategories(apiToken);
             const individualCategories = fetchedCategories.filter(c => !c.is_group);
             setCategories(individualCategories);
         } catch (error) {
@@ -266,7 +262,7 @@ export function SettingsView() {
                             className="w-full bg-slate-50 border border-input rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all font-mono"
                         />
                         <p className="text-xs text-muted-foreground">
-                            Your token is stored securely in your browser&apos;s local storage. We do not store it on any server.
+                            Your token is stored locally in your browser&apos;s local storage. It is sent only to Lunch Money&apos;s API — not to any server we operate.
                         </p>
                     </div>
 

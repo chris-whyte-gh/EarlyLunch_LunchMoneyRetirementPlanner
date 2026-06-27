@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@fontsource/lato": "^5.2.7",
+    "@lunch-money/lunch-money-js-v2": "^2.9.0",
     "@radix-ui/react-separator": "^1.1.8",
     "@radix-ui/react-tooltip": "^1.2.8",
     "clsx": "^2.1.1",

@@ -13,7 +13,7 @@ A sophisticated retirement planning tool that connects with your actual financia
 - **Simplified Input** - Birth year only (no birth month needed) for easier onboarding
 - **Smart Spending Estimates** - Monthly/yearly spending sync with lifestyle benchmarks
 - **Beautiful Visualizations** - Interactive charts for portfolio growth and withdrawal strategies
-- **Privacy First** - Your financial data stays on your machine when running locally
+- **Privacy First** - Your Lunch Money token and cached data stay in your browser; nothing is stored on our servers
 
 ## 🎯 Perfect For
 
@@ -26,7 +26,7 @@ A sophisticated retirement planning tool that connects with your actual financia
 
 - **Next.js 16** with React 19 and TypeScript
 - **Real-time calculations** with advanced financial modeling
-- **LunchMoney API** integration for live financial data
+- **Lunch Money API v2** integration via the official TypeScript SDK
 - **Responsive design** with Tailwind CSS and shadcn/ui
 - **Data validation** with Zod schemas
 - **Interactive charts** powered by Recharts

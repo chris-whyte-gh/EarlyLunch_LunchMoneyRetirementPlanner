@@ -5,7 +5,8 @@ import { useRouter, usePathname } from 'next/navigation';
 import { SimpleRetirementParams, SimpleRetirementResults, calculateSimpleRetirement, calculateRequiredMonthlySavings, getBeginnerRecommendations } from '@/lib/simpleModeling';
 import { cn, formatCurrency } from '@/lib/utils';
 import { TrendingUp, Calendar, DollarSign, PiggyBank, ArrowRight, Info, Wallet, CreditCard } from 'lucide-react';
-import { Asset, Transaction, getLunchMoneyClient } from '@/lib/lunchmoney';
+import { Asset, Transaction } from '@/lib/lunchmoney';
+import { fetchLunchMoneyData } from '@/lib/lunchmoneyApi';
 import { STORAGE_KEYS } from '@/lib/constants';
 import { categorizeAssets, categorizeAsset, getCategoryDisplayName } from '@/lib/assetCategorization';
 
@@ -69,22 +70,20 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             if (token && token !== 'your_token_here') {
                 console.log('QuickStart - Setting hasLunchMoneyToken to true');
                 setHasLunchMoneyToken(true);
-                await fetchLunchMoneyData(token);
+                await fetchLunchMoneyDataFromApi(token);
             }
         };
         checkLunchMoneyConnection();
     }, []);
 
-    const fetchLunchMoneyData = async (token: string) => {
+    const fetchLunchMoneyDataFromApi = async (token: string) => {
         setLoadingData(true);
         setDataError(null);
         
         try {
-            const client = getLunchMoneyClient(token);
-            const [assetsData, transactionsData] = await Promise.all([
-                client.getAssets(),
-                client.getTransactions()
-            ]);
+            const data = await fetchLunchMoneyData(token);
+            const assetsData = data.assets;
+            const transactionsData = data.transactions;
             
             setAssets(assetsData);
             setTransactions(transactionsData);
@@ -119,15 +118,15 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     };
 
     const calculateMonthlySavings = (transactionsData: Transaction[]): number => {
-        // Calculate average monthly income from the last 3 months
+        // v2 API: negative amounts are credits (income)
         const threeMonthsAgo = new Date();
         threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
         
         const incomeTransactions = transactionsData
-            .filter(t => new Date(t.date) >= threeMonthsAgo && parseFloat(t.amount) > 0)
-            .reduce((total, t) => total + parseFloat(t.amount), 0);
+            .filter(t => new Date(t.date) >= threeMonthsAgo && parseFloat(t.amount) < 0)
+            .reduce((total, t) => total + Math.abs(parseFloat(t.amount)), 0);
             
-        return Math.round(incomeTransactions / 3); // Average per month
+        return Math.round(incomeTransactions / 3);
     };
 
     const questions: QuickStartQuestion[] = [
