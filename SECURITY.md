@@ -29,8 +29,8 @@ This project takes security seriously, especially when handling financial data. 
 If you discover a security vulnerability, please report it responsibly.
 
 ### How to Report
-**Email:** [your-email@example.com] *(replace with your actual email)*
-**Subject:** Security Vulnerability Report - Retirement Modeler
+**Email:** what.luck.enterprises@gmail.com
+**Subject:** Security Vulnerability Report - EarlyLunch
 
 ### What to Include
 - **Vulnerability type** (e.g., XSS, authentication bypass, data exposure)

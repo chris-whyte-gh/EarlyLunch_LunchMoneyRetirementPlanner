@@ -13,7 +13,7 @@ A sophisticated retirement planning tool that connects with your actual financia
 - **Simplified Input** - Birth year only (no birth month needed) for easier onboarding
 - **Smart Spending Estimates** - Monthly/yearly spending sync with lifestyle benchmarks
 - **Beautiful Visualizations** - Interactive charts for portfolio growth and withdrawal strategies
-- **Privacy First** - Your Lunch Money token and cached API data are stored locally in your browser's localStorage and are not sent to any server
+- **Privacy First** - Your Lunch Money token and cached API data are stored locally in your browser's localStorage. Tokens pass through our API route to Lunch Money but are not persisted on our servers
 
 ## 🎯 Perfect For
 

@@ -66,9 +66,7 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
     useEffect(() => {
         const checkLunchMoneyConnection = async () => {
             const token = localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
-            console.log('QuickStart - Token check:', { token: token ? 'exists' : 'none', tokenValue: token });
             if (token && token !== 'your_token_here') {
-                console.log('QuickStart - Setting hasLunchMoneyToken to true');
                 setHasLunchMoneyToken(true);
                 await fetchLunchMoneyDataFromApi(token);
             }
@@ -90,9 +88,6 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
             
             // Auto-categorize assets
             const categorized = categorizeAssets(assetsData);
-            console.log('Debug - Raw Assets:', assetsData.map(a => ({ name: a.name, type: a.type_name, subtype: a.subtype_name, balance: a.balance })));
-            console.log('Debug - Categorized:', categorized);
-            console.log('Debug - Individual categorization:', assetsData.map(a => ({ name: a.name, category: categorizeAsset(a) })));
             setCategorizedAssets(categorized);
             
             // Auto-populate savings amount with categorized data
@@ -398,13 +393,6 @@ export function QuickStart({ params, onChange, onAdvancedMode }: QuickStartProps
                     {(() => {
                         const totalCategorized = categorizedAssets.taxable + categorizedAssets.preTax + categorizedAssets.roth;
                         const shouldShow = hasLunchMoneyToken && totalCategorized > 0;
-                        console.log('QuickStart - Display check:', { 
-                            hasLunchMoneyToken, 
-                            assetsLength: assets.length, 
-                            categorizedAssets,
-                            totalCategorized,
-                            shouldShow 
-                        });
                         return shouldShow;
                     })() && (
                         <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
