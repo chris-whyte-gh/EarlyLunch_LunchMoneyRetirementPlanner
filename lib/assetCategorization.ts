@@ -142,7 +142,6 @@ export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | '
     if (typeof window !== 'undefined') {
         const overrides = JSON.parse(localStorage.getItem('assetCategoryOverrides') || '{}');
         if (overrides[asset.id]) {
-            console.log('Using manual override for asset:', asset.name, '->', overrides[asset.id]);
             return overrides[asset.id];
         }
     }
@@ -151,13 +150,6 @@ export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | '
     const type_name = asset.type_name?.toLowerCase() || '';
     const subtype_name = asset.subtype_name?.toLowerCase() || '';
     
-    // Debug logging
-    console.log('Categorizing asset:', {
-        name: asset.name,
-        type_name: asset.type_name,
-        subtype_name: asset.subtype_name,
-        balance: asset.balance
-    });
     
     // Check Roth first (more specific)
     const rothConfig = ASSET_CATEGORIZATION_MAP.roth;
@@ -167,15 +159,8 @@ export function categorizeAsset(asset: Asset): 'taxable' | 'preTax' | 'roth' | '
         rothConfig.namePatterns.some(pattern => pattern.test(name))
     );
     
-    console.log('Roth match check:', {
-        typeMatch: type_name && rothConfig.types.includes(type_name),
-        subtypeMatch: subtype_name && rothConfig.subtypes.includes(subtype_name),
-        nameMatch: rothConfig.namePatterns.some(pattern => pattern.test(name)),
-        rothMatch
-    });
     
     if (rothMatch) {
-        console.log('Categorized as Roth');
         return 'roth';
     }
 

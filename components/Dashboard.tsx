@@ -297,8 +297,7 @@ export function Dashboard() {
                 if (cachedData && cacheTimestamp) {
                     const cacheAge = Date.now() - parseInt(cacheTimestamp);
                     if (cacheAge < CACHE_DURATION) {
-                        console.log('Using cached LunchMoney data');
-                        const data = JSON.parse(cachedData);
+                                    const data = JSON.parse(cachedData);
                         // Process cached data
                         processLunchMoneyData(data, token || '', birthYearStr);
                         setLoading(false);
@@ -330,7 +329,6 @@ export function Dashboard() {
                 // Cache the data for 5 minutes
                 localStorage.setItem('lunchmoneyCache', JSON.stringify(data));
                 localStorage.setItem('lunchmoneyCacheTimestamp', Date.now().toString());
-                console.log('Cached LunchMoney data');
 
                 // Unpack excluded IDs and spending sources
                 let excludedIds: number[] = [];
